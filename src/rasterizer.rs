@@ -8,19 +8,19 @@ use opencv::gapi::validate_input_arg;
 use crate::rasterizer::Primitive::Triangle;
 use crate::triangle;
 
-enum Buffer {
+pub enum Buffer {
     Color,
     Depth,
     Both,
 }
 
-enum Primitive {
+pub enum Primitive {
     Line,
     Triangle,
 }
 
 #[derive(Default)]
-struct Rasterizer {
+pub struct Rasterizer {
     model: Matrix4<f64>,
     view: Matrix4<f64>,
     projection: Matrix4<f64>,
@@ -35,14 +35,17 @@ struct Rasterizer {
     next_id: usize,
 }
 
+#[derive(Clone, Copy)]
 struct PosBufId(usize);
 
+#[derive(Clone, Copy)]
 struct IndBufId(usize);
 
+#[derive(Clone, Copy)]
 struct ColBufId(usize);
 
 impl Rasterizer {
-    fn new(w: u64, h: u64) -> Self {
+    pub fn new(w: u64, h: u64) -> Self {
         let mut r = Rasterizer::default();
         r.width = w;
         r.height = h;
@@ -51,17 +54,17 @@ impl Rasterizer {
         r
     }
 
-    fn get_index(&self, x: usize, y: usize) -> usize {
-        ((self.height - 1 - y as u64) * self.width + x as u64) as usize
+    fn get_index(height: u64, width: u64, x: usize, y: usize) -> usize {
+        ((height - 1 - y as u64) * width + x as u64) as usize
     }
 
-    fn set_pixel(&mut self, point: &Vector3<f64>, color: &Vector3<f64>) {
-        let ind = (self.height as f64 - 1.0 - point.y) * self.width as f64 + point.x;
+    fn set_pixel(height: u64, width: u64, frame_buf: &mut Vec<Vector3<f64>>, point: &Vector3<f64>, color: &Vector3<f64>) {
+        let ind = (height as f64 - 1.0 - point.y) * width as f64 + point.x;
         let ind = ind as usize;
-        self.frame_buf[ind] = *color;
+        frame_buf[ind] = *color;
     }
 
-    fn clear(&mut self, buff: Buffer) {
+    pub fn clear(&mut self, buff: Buffer) {
         match buff {
             Buffer::Color =>
                 self.frame_buf.fill(Vector3::new(0.0, 0.0, 0.0)),
@@ -73,40 +76,40 @@ impl Rasterizer {
             }
         }
     }
-    fn set_model(&mut self, model: &Matrix4<f64>) {
-        self.model = *model;
+    pub fn set_model(&mut self, model: Matrix4<f64>) {
+        self.model = model;
     }
 
-    fn set_view(&mut self, view: &Matrix4<f64>) {
-        self.view = *view;
+    pub fn set_view(&mut self, view: Matrix4<f64>) {
+        self.view = view;
     }
 
-    fn set_projection(&mut self, projection: &Matrix4<f64>) {
-        self.projection = *projection;
+    pub fn set_projection(&mut self, projection: Matrix4<f64>) {
+        self.projection = projection;
     }
     fn get_next_id(&mut self) -> usize {
         let res = self.next_id;
         self.next_id += 1;
         res
     }
-    fn load_position(&mut self, positions: &Vec<Vector3<f64>>) -> PosBufId {
+    pub fn load_position(&mut self, positions: &Vec<Vector3<f64>>) -> PosBufId {
         let id = self.get_next_id();
         self.pos_buf.insert(id, positions.clone());
         PosBufId(id)
     }
 
-    fn load_indices(&mut self, indices: &Vec<Vector3<usize>>) -> IndBufId {
+    pub fn load_indices(&mut self, indices: &Vec<Vector3<usize>>) -> IndBufId {
         let id = self.get_next_id();
         self.ind_buf.insert(id, indices.clone());
         IndBufId(id)
     }
-    fn load_colors(&mut self, colors: &Vec<Vector3<f64>>) -> ColBufId {
+    pub fn load_colors(&mut self, colors: &Vec<Vector3<f64>>) -> ColBufId {
         let id = self.get_next_id();
         self.col_buf.insert(id, colors.clone());
         ColBufId(id)
     }
 
-    fn draw(&mut self, pos_buffer: PosBufId, ind_buffer: IndBufId, col_buffer: ColBufId, typ: Primitive) {
+    pub fn draw(&mut self, pos_buffer: PosBufId, ind_buffer: IndBufId, col_buffer: ColBufId, typ: Primitive) {
         let buf = &self.pos_buf[&pos_buffer.0];
         let ind: &Vec<Vector3<usize>> = &self.ind_buf[&ind_buffer.0];
         let col = &self.col_buf[&col_buffer.0];
@@ -150,13 +153,16 @@ impl Rasterizer {
                     let w_reciprocal = 1.0 / (a / v[0].w + b / v[1].w + c / v[2].w);
                     let mut z_interpolated = a * v[0].z / v[0].w + b * v[1].z / v[1].w + c * v[2].z / v[2].w;
                     z_interpolated *= w_reciprocal;
-                    if z_interpolated < self.depth_buf[self.get_index(x, y)] {
-                        self.depth_buf[self.get_index(x, y)] = z_interpolated;
-                        self.set_pixel(&Vector3::new(fx, fy, 1.0), &t.get_color());
+                    if z_interpolated < self.depth_buf[Rasterizer::get_index(self.width, self.height, x, y)] {
+                        self.depth_buf[Rasterizer::get_index(self.width, self.height, x, y)] = z_interpolated;
+                        Rasterizer::set_pixel(self.width, self.height, &mut self.frame_buf, &Vector3::new(fx, fy, 1.0), &t.get_color());
                     }
                 }
             }
         }
+    }
+    pub fn frame_buffer(&self) -> &Vec<Vector3<f64>> {
+        &self.frame_buf
     }
 }
 
