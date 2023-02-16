@@ -1,19 +1,16 @@
-#![allow(dead_code)]
-
-use std::cmp::max;
 use std::collections::HashMap;
 
-use nalgebra::{ArrayStorage, Const, Matrix, Matrix4, min, Vector3, Vector4};
-use opencv::gapi::validate_input_arg;
-use crate::rasterizer::Primitive::Triangle;
+use nalgebra::{Matrix4, Vector3, Vector4};
 use crate::triangle;
 
+#[allow(dead_code)]
 pub enum Buffer {
     Color,
     Depth,
     Both,
 }
 
+#[allow(dead_code)]
 pub enum Primitive {
     Line,
     Triangle,
@@ -36,13 +33,13 @@ pub struct Rasterizer {
 }
 
 #[derive(Clone, Copy)]
-struct PosBufId(usize);
+pub struct PosBufId(usize);
 
 #[derive(Clone, Copy)]
-struct IndBufId(usize);
+pub struct IndBufId(usize);
 
 #[derive(Clone, Copy)]
-struct ColBufId(usize);
+pub struct ColBufId(usize);
 
 impl Rasterizer {
     pub fn new(w: u64, h: u64) -> Self {
@@ -69,10 +66,10 @@ impl Rasterizer {
             Buffer::Color =>
                 self.frame_buf.fill(Vector3::new(0.0, 0.0, 0.0)),
             Buffer::Depth =>
-                self.depth_buf.fill(f64::MIN),
+                self.depth_buf.fill(f64::MAX),
             Buffer::Both => {
                 self.frame_buf.fill(Vector3::new(0.0, 0.0, 0.0));
-                self.depth_buf.fill(f64::MIN);
+                self.depth_buf.fill(f64::MAX);
             }
         }
     }
@@ -109,22 +106,25 @@ impl Rasterizer {
         ColBufId(id)
     }
 
-    pub fn draw(&mut self, pos_buffer: PosBufId, ind_buffer: IndBufId, col_buffer: ColBufId, typ: Primitive) {
+    pub fn draw(&mut self, pos_buffer: PosBufId, ind_buffer: IndBufId, col_buffer: ColBufId, _typ: Primitive) {
         let buf = &self.pos_buf[&pos_buffer.0];
         let ind: &Vec<Vector3<usize>> = &self.ind_buf[&ind_buffer.0];
         let col = &self.col_buf[&col_buffer.0];
         let f1 = (50.0 - 0.1) / 2.0;
         let f2 = (50.0 + 0.1) / 2.0;
         let mvp = self.projection * self.view * self.model;
+
         for i in ind.iter() {
             let mut t = triangle::Triangle::new();
             let mut v = vec![mvp * to_vec4(buf[i[0]], Some(1.0)),
                              mvp * to_vec4(buf[i[1]], Some(1.0)),
                              mvp * to_vec4(buf[i[2]], Some(1.0))];
-            for mut vec in v.iter_mut() {
+
+
+            for vec in v.iter_mut() {
                 *vec = *vec / vec.w;
             }
-            for mut vert in v.iter_mut() {
+            for vert in v.iter_mut() {
                 vert.x = 0.5 * self.width as f64 * (vert.x + 1.0);
                 vert.y = 0.5 * self.height as f64 * (vert.y + 1.0);
                 vert.z = vert.z * f1 + f2;
@@ -132,6 +132,7 @@ impl Rasterizer {
             for j in 0..3 {
                 t.set_vertex(j, Vector3::new(v[j].x, v[j].y, v[j].z));
             }
+
             let col_x = col[i[0]];
             let col_y = col[i[1]];
             let col_z = col[i[2]];
@@ -143,7 +144,6 @@ impl Rasterizer {
             let max_x = v[0].x.max(v[1].x).max(v[2].x) as usize;
             let min_y = v[0].y.min(v[1].y).min(v[2].y) as usize;
             let max_y = v[0].y.max(v[1].y).max(v[2].y) as usize;
-
             // rasterize_triangle
             for x in min_x..=max_x {
                 for y in min_y..=max_y {
