@@ -10,6 +10,7 @@ use opencv::{
     imgcodecs,
     Result,
 };
+use crate::triangle::Triangle;
 
 fn get_view_matrix(eye_pos: Vector3<f64>) -> Matrix4<f64> {
     let mut view: Matrix4<f64> = Matrix4::identity();
