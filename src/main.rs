@@ -10,8 +10,7 @@ use opencv::{
 };
 use opencv::highgui::{imshow, wait_key};
 use crate::rasterizer::{Primitive, Rasterizer};
-use utils::{get_projection_matrix, get_model_matrix, get_view_matrix};
-use crate::utils::frame_buffer2cv_mat;
+use utils::*;
 
 fn main() -> Result<()> {
     let mut r = Rasterizer::new(700, 700);
@@ -21,7 +20,7 @@ fn main() -> Result<()> {
                    Vector3::new(-2.0, 0.0, -2.0),
                    Vector3::new(3.5, -1.0, -5.0),
                    Vector3::new(2.5, 1.5, -5.0),
-                   Vector3::new(-1.0, 0.5, -5.0)];
+                   Vector3::new(-1.0, 0.5, -1.0)];
     let ind = vec![Vector3::new(0, 1, 2), Vector3::new(3, 4, 5)];
     let cols = vec![Vector3::new(217.0, 238.0, 185.0),
                     Vector3::new(217.0, 238.0, 185.0),
@@ -46,7 +45,7 @@ fn main() -> Result<()> {
 
         imshow("image", &image)?;
 
-        k = wait_key(1000).unwrap();
+        k = wait_key(2000).unwrap();
         println!("frame count: {}", frame_count);
         frame_count += 1;
     }

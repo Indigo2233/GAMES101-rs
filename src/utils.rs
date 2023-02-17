@@ -59,5 +59,5 @@ pub(crate) fn frame_buffer2cv_mat(frame_buffer: &Vec<Vector3<f64>>) -> opencv::c
     let mut img = Mat::copy(&image).unwrap();
     image.convert_to(&mut img, opencv::core::CV_8UC3, 1.0, 1.0).expect("panic message");
     cvt_color(&img, &mut image, COLOR_RGB2BGR, 0).unwrap();
-    img
+    image
 }

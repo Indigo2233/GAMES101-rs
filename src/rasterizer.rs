@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use nalgebra::{Matrix4, Vector3, Vector4};
-use crate::triangle;
+use crate::triangle::Triangle;
 
 #[allow(dead_code)]
 pub enum Buffer {
@@ -110,41 +110,18 @@ impl Rasterizer {
         let buf = &self.pos_buf[&pos_buffer.0];
         let ind: &Vec<Vector3<usize>> = &self.ind_buf[&ind_buffer.0];
         let col = &self.col_buf[&col_buffer.0];
-        let f1 = (50.0 - 0.1) / 2.0;
-        let f2 = (50.0 + 0.1) / 2.0;
+
         let mvp = self.projection * self.view * self.model;
 
-        for i in ind.iter() {
-            let mut t = triangle::Triangle::new();
-            let mut v = vec![mvp * to_vec4(buf[i[0]], Some(1.0)),
-                             mvp * to_vec4(buf[i[1]], Some(1.0)),
-                             mvp * to_vec4(buf[i[2]], Some(1.0))];
+        for i in ind {
+            let t = Rasterizer::get_triangle(self.width, self.height, buf, col, mvp, i);
 
-
-            for vec in v.iter_mut() {
-                *vec = *vec / vec.w;
-            }
-            for vert in v.iter_mut() {
-                vert.x = 0.5 * self.width as f64 * (vert.x + 1.0);
-                vert.y = 0.5 * self.height as f64 * (vert.y + 1.0);
-                vert.z = vert.z * f1 + f2;
-            }
-            for j in 0..3 {
-                t.set_vertex(j, Vector3::new(v[j].x, v[j].y, v[j].z));
-            }
-
-            let col_x = col[i[0]];
-            let col_y = col[i[1]];
-            let col_z = col[i[2]];
-            t.set_color(0, col_x[0], col_x[1], col_x[2]);
-            t.set_color(1, col_y[0], col_y[1], col_y[2]);
-            t.set_color(2, col_z[0], col_z[1], col_z[2]);
+            // rasterize_triangle
             let v = &t.to_vector4();
             let min_x = v[0].x.min(v[1].x).min(v[2].x) as usize;
             let max_x = v[0].x.max(v[1].x).max(v[2].x) as usize;
             let min_y = v[0].y.min(v[1].y).min(v[2].y) as usize;
             let max_y = v[0].y.max(v[1].y).max(v[2].y) as usize;
-            // rasterize_triangle
             for x in min_x..=max_x {
                 for y in min_y..=max_y {
                     let (fx, fy) = (x as f64, y as f64);
@@ -161,6 +138,38 @@ impl Rasterizer {
             }
         }
     }
+
+    fn get_triangle(width: u64, height: u64, buf: &Vec<Vector3<f64>>, col: &Vec<Vector3<f64>>, mvp: Matrix4<f64>, i: &Vector3<usize>) -> Triangle {
+        let f1 = (50.0 - 0.1) / 2.0;
+        let f2 = (50.0 + 0.1) / 2.0;
+
+        let mut t = Triangle::new();
+        let mut v =
+            vec![mvp * to_vec4(buf[i[0]], Some(1.0)),
+                 mvp * to_vec4(buf[i[1]], Some(1.0)),
+                 mvp * to_vec4(buf[i[2]], Some(1.0))];
+
+        for vec in v.iter_mut() {
+            *vec = *vec / vec.w;
+        }
+        for vert in v.iter_mut() {
+            vert.x = 0.5 * width as f64 * (vert.x + 1.0);
+            vert.y = 0.5 * height as f64 * (vert.y + 1.0);
+            vert.z = vert.z * f1 + f2;
+        }
+        for j in 0..3 {
+            t.set_vertex(j, Vector3::new(v[j].x, v[j].y, v[j].z));
+        }
+
+        let col_x = col[i[0]];
+        let col_y = col[i[1]];
+        let col_z = col[i[2]];
+        t.set_color(0, col_x[0], col_x[1], col_x[2]);
+        t.set_color(1, col_y[0], col_y[1], col_y[2]);
+        t.set_color(2, col_z[0], col_z[1], col_z[2]);
+        t
+    }
+
     pub fn frame_buffer(&self) -> &Vec<Vector3<f64>> {
         &self.frame_buf
     }
