@@ -1,6 +1,9 @@
 #include "OBJ_Loader_C.h"
 #include "OBJ_Loader.h"
-
+/*
+ * Building this C wrapper:
+ * g++ -shared -o libobjloader.so OBJ_Loader_C.cpp -lc -fPIC
+ */
 extern "C" {
 void *create_new_loader() {
     return new objl::Loader();
