@@ -21,11 +21,11 @@ void *mesh_at(void *meshes, size_t idx);
 
 size_t vertex_size_mesh(void *mesh);
 
-float *mesh_position_at(void *mesh, size_t idx, uint32_t axis);
+float *mesh_position_at(void *mesh, size_t idx);
 
-float mesh_normal_at(void *mesh, size_t idx, uint32_t axis);
+float *mesh_normal_at(void *mesh, size_t idx);
 
-float mesh_texture_at(void *mesh, size_t idx, uint32_t axis);
+float *mesh_texture_at(void *mesh, size_t idx);
 
 #ifdef __cplusplus
 }

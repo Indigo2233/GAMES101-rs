@@ -38,7 +38,7 @@ size_t vertex_size_mesh(void *mesh) {
     return m->Vertices.size();
 }
 
-float *mesh_position_at(void *mesh, size_t idx, uint32_t axis) {
+float *mesh_position_at(void *mesh, size_t idx) {
     objl::Mesh *m = (objl::Mesh *) mesh;
     objl::Vector3 position = m->Vertices[idx].Position;
     float *res = new float[3];
@@ -48,7 +48,7 @@ float *mesh_position_at(void *mesh, size_t idx, uint32_t axis) {
     return res;
 }
 
-float mesh_normal_at(void *mesh, size_t idx, uint32_t axis) {
+float* mesh_normal_at(void *mesh, size_t idx) {
     objl::Mesh *m = (objl::Mesh *) mesh;
     objl::Vector3 normal = m->Vertices[idx].Normal;
     float *res = new float[3];
@@ -58,11 +58,12 @@ float mesh_normal_at(void *mesh, size_t idx, uint32_t axis) {
     return res;
 }
 
-float mesh_texture_at(void *mesh, size_t idx, uint32_t axis) {
+float* mesh_texture_at(void *mesh, size_t idx) {
     objl::Mesh *m = (objl::Mesh *) mesh;
-    objl::Vector3 texture = m->Vertices[idx].TextureCoordinate;
+    objl::Vector2 texture = m->Vertices[idx].TextureCoordinate;
     float *res = new float[2];
     res[0] = texture.X;
     res[1] = texture.Y;
+    return res;
 }
 }

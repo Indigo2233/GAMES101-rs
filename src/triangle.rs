@@ -23,6 +23,10 @@ impl Triangle {
     pub fn set_vertex(&mut self, ind: usize, ver: Vector3<f64>) {
         self.v[ind] = ver;
     }
+    pub fn set_normal(&mut self, ind: usize, ver: Vector3<f64>) {
+        self.normal[ind] = ver;
+    }
+
     pub fn set_color(&mut self, ind: usize, r: f64, g: f64, b: f64) {
         if r < 0.0 || r > 255.0 || g < 0.0 || g > 255.0 || b < 0.0 || b > 255.0 {
             eprintln!("ERROR! Invalid color values");
