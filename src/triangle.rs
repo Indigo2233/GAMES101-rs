@@ -3,24 +3,16 @@
 use std::process::exit;
 use nalgebra::{Vector2, Vector3, Vector4};
 
+#[derive(Default, Clone)]
 pub struct Triangle {
-    pub v: [Vector3<f64>; 3],
+    pub v: [Vector4<f64>; 3],
     pub color: [Vector3<f64>; 3],
     pub tex_coords: [Vector2<f64>; 3],
     pub normal: [Vector3<f64>; 3],
 }
 
 impl Triangle {
-    pub(crate) fn new() -> Self {
-        let v: Vector3<f64> = Vector3::new(0.0, 0.0, 0.0);
-        Triangle {
-            v: [v; 3],
-            color: [v; 3],
-            tex_coords: [Vector2::new(0.0, 0.0); 3],
-            normal: [v; 3],
-        }
-    }
-    pub fn set_vertex(&mut self, ind: usize, ver: Vector3<f64>) {
+    pub fn set_vertex(&mut self, ind: usize, ver: Vector4<f64>) {
         self.v[ind] = ver;
     }
     pub fn set_normal(&mut self, ind: usize, ver: Vector3<f64>) {

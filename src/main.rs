@@ -1,6 +1,8 @@
 mod triangle;
 mod rasterizer;
 mod utils;
+mod texture;
+mod shader;
 
 extern crate opencv;
 
@@ -19,57 +21,18 @@ extern "C" {
 
 use std::ffi::{c_char, c_void, CString};
 use std::slice;
-use nalgebra::Vector3;
+use nalgebra::{Vector3, Vector4};
 use opencv::{
     Result,
 };
-use opencv::highgui::{imshow, wait_key};
-use crate::rasterizer::{Primitive, Rasterizer};
+use opencv::core::Vector;
+use crate::rasterizer::{Buffer, Rasterizer};
 use utils::*;
+use crate::texture::Texture;
 use crate::triangle::Triangle;
 
-fn hw2() -> Result<()> {
-    let mut r = Rasterizer::new(700, 700);
-    let eye_pos = Vector3::new(0.0, 0.0, 5.0);
-    let pos = vec![Vector3::new(2.0, 0.0, -2.0),
-                   Vector3::new(0.0, 2.0, -2.0),
-                   Vector3::new(-2.0, 0.0, -2.0),
-                   Vector3::new(3.5, -1.0, -5.0),
-                   Vector3::new(2.5, 1.5, -5.0),
-                   Vector3::new(-1.0, 0.5, -1.0)];
-    let ind = vec![Vector3::new(0, 1, 2), Vector3::new(3, 4, 5)];
-    let cols = vec![Vector3::new(217.0, 238.0, 185.0),
-                    Vector3::new(217.0, 238.0, 185.0),
-                    Vector3::new(217.0, 238.0, 185.0),
-                    Vector3::new(185.0, 217.0, 238.0),
-                    Vector3::new(185.0, 217.0, 238.0),
-                    Vector3::new(185.0, 217.0, 238.0), ];
-    let pos_id = r.load_position(&pos);
-    let ind_id = r.load_indices(&ind);
-    let col_id = r.load_colors(&cols);
-    let mut k = 0;
-    let mut frame_count = 0;
-    while k != 27 {
-        r.clear(rasterizer::Buffer::Both);
-        r.set_model(get_model_matrix(0.0));
-        r.set_view(get_view_matrix(eye_pos));
-        r.set_projection(get_projection_matrix(45.0, 1.0, 0.1, 50.0));
-        r.draw(pos_id, ind_id, col_id, Primitive::Triangle);
-
-        let frame_buffer = r.frame_buffer();
-        let image = frame_buffer2cv_mat(frame_buffer);
-
-        imshow("image", &image)?;
-
-        k = wait_key(2000).unwrap();
-        println!("frame count: {}", frame_count);
-        frame_count += 1;
-    }
-    Ok(())
-}
-
 unsafe fn load_triangles() -> Vec<Triangle> {
-    let traingles = vec![];
+    let mut triangles = vec![];
     let loader = create_new_loader();
 
     let file: *const c_char = CString::new("./models/spot/spot_triangulated_good.obj").unwrap().into_raw();
@@ -82,31 +45,58 @@ unsafe fn load_triangles() -> Vec<Triangle> {
         let sz = vertex_size_mesh(mesh);
         let mut j = 0;
         while j < sz {
-            let mut t = Triangle::new();
-            for _ in 0..3 {
-                let res: Vec<f64> = slice::from_raw_parts(mesh_position_at(mesh, i + j), 3)
+            let mut t = Triangle::default();
+            for k in 0..3 {
+                let res: Vec<f64> = slice::from_raw_parts(mesh_position_at(mesh, k + j), 3)
                     .into_iter().map(|elem| *elem as f64).collect();
-                t.set_vertex(j, Vector3::new(res[0], res[1], res[2]));
+                t.set_vertex(k, Vector4::new(res[0], res[1], res[2], 1.0));
 
-                let res: Vec<f64> = slice::from_raw_parts(mesh_normal_at(mesh, i + j), 3)
+                let res: Vec<f64> = slice::from_raw_parts(mesh_normal_at(mesh, k + j), 3)
                     .into_iter().map(|elem| *elem as f64).collect();
-                t.set_normal(j, Vector3::new(res[0], res[1], res[2]));
-                let res: Vec<f64> = slice::from_raw_parts(mesh_texture_at(mesh, i + j), 2)
+                t.set_normal(k, Vector3::new(res[0], res[1], res[2]));
+                let res: Vec<f64> = slice::from_raw_parts(mesh_texture_at(mesh, k + j), 2)
                     .into_iter().map(|elem| *elem as f64).collect();
-                t.set_tex_coord(j, res[0], res[1]);
+                t.set_tex_coord(k, res[0], res[1]);
             }
             j += 3;
+
+            triangles.push(t);
         }
     }
 
-
     delete_loader(loader);
-    traingles
+    triangles
 }
 
 fn hw3() -> Result<()> {
     let triangles = unsafe { load_triangles() };
 
+    let angle = 140.0;
+
+    let mut r = Rasterizer::new(700, 700);
+    let obj_path = "./models/spot/".to_owned();
+    let filename = "output.png".to_owned();
+    let texture_path = "hmap.jpg".to_owned();
+    let tex = Texture::new(&(obj_path + &texture_path));
+    let mut active_shader = phong_fragment_shader;
+    r.set_texture(tex);
+
+    let eye_pos = Vector3::new(0.0, 0.0, 10.0);
+    r.set_vertex_shader(vertex_shader);
+    r.set_fragment_shader(active_shader);
+
+
+    r.clear(Buffer::Both);
+    r.set_model(get_model_matrix(angle));
+    r.set_view(get_view_matrix(eye_pos));
+    r.set_projection(get_projection_matrix(45.0, 1.0, 0.1, 50.0));
+
+    r.draw(&triangles);
+    println!("{:?}", r.frame_buffer());
+    let image = frame_buffer2cv_mat(r.frame_buffer());
+    let v: Vector<i32> = Default::default();
+
+    opencv::imgcodecs::imwrite(&filename, &image, &v).unwrap();
     Ok(())
 }
 
