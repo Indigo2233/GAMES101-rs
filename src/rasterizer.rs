@@ -64,8 +64,7 @@ impl Rasterizer {
 
     fn set_pixel(height: u64, width: u64, frame_buf: &mut Vec<Vector3<f64>>, point: &Vector3<f64>, color: &Vector3<f64>) {
         let ind = (height as f64 - 1.0 - point.y) * width as f64 + point.x;
-        let ind = ind as usize;
-        frame_buf[ind] = *color;
+        frame_buf[ind as usize] = *color;
     }
 
     pub fn clear(&mut self, buff: Buffer) {
@@ -145,25 +144,28 @@ impl Rasterizer {
                         let interpolated_color = Self::interpolate3(alpha, beta, gamma, new_tri.color[0], new_tri.color[1], new_tri.color[2], 1.0);
                         let interpolated_normal = Self::interpolate3(alpha, beta, gamma,
                                                                      new_tri.normal[0], new_tri.normal[1], new_tri.normal[2], 1.0).normalize();
-                        let interpolated_texcoords = Self::interpolate2(alpha, beta, gamma, new_tri.tex_coords[0], new_tri.tex_coords[1],
-                                                                        new_tri.tex_coords[2], 1.0);
+                        let interpolated_texcoords = Self::interpolate2(alpha, beta, gamma,
+                                                                        new_tri.tex_coords[0], new_tri.tex_coords[1], new_tri.tex_coords[2], 1.0);
                         let interpolated_shadingcoords = Self::interpolate3(alpha, beta, gamma,
                                                                             view_pos[0], view_pos[1], view_pos[2], 1.0);
-                        let mut payload = FragmentShaderPayload::new(&interpolated_color, &interpolated_normal,
-                                                                     &interpolated_texcoords, match &self.texture {
-                                None => None,
-                                Some(tex) => Some(Rc::new(tex)),
-                            });
+                        let mut payload =
+                            FragmentShaderPayload::new(&interpolated_color,
+                                                       &interpolated_normal,
+                                                       &interpolated_texcoords,
+                                                       match &self.texture {
+                                                           None => None,
+                                                           Some(tex) => Some(Rc::new(tex)),
+                                                       });
                         payload.view_pos = interpolated_shadingcoords;
                         let pixel_color = match self.fragment_shader {
                             None => Vector3::zeros(),
                             Some(f) => f(&payload),
                         };
-                        println!("{:?}", pixel_color);
                         Rasterizer::set_pixel(self.width, self.height, &mut self.frame_buf, &Vector3::new(fx, fy, 1.0), &pixel_color);
                     }
                 }
             }
+            break
         }
     }
     fn interpolate3(a: f64, b: f64, c: f64, vert1: Vector3<f64>, vert2: Vector3<f64>, vert3: Vector3<f64>, weight: f64) -> Vector3<f64> {

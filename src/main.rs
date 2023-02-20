@@ -92,7 +92,7 @@ fn hw3() -> Result<()> {
     r.set_projection(get_projection_matrix(45.0, 1.0, 0.1, 50.0));
 
     r.draw(&triangles);
-    println!("{:?}", r.frame_buffer());
+
     let image = frame_buffer2cv_mat(r.frame_buffer());
     let v: Vector<i32> = Default::default();
 
