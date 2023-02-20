@@ -2,8 +2,9 @@ extern crate opencv;
 
 use std::ops::Mul;
 use opencv::core::{CV_8UC3, Mat, MatTrait, Point, Point2d, Point2i, Scalar, VecN};
-use opencv::highgui::{EVENT_LBUTTONDOWN, imshow, named_window, set_mouse_callback, wait_key, WINDOW_AUTOSIZE};
-use opencv::imgproc::{circle, COLOR_RGB2BGR, cvt_color};
+use opencv::highgui::{imshow, named_window, set_mouse_callback, wait_key,
+                      EVENT_LBUTTONDOWN, WINDOW_AUTOSIZE};
+use opencv::imgproc::{circle, cvt_color, COLOR_RGB2BGR};
 
 static mut CONTROL_POINTS: Vec<Point2i> = vec![];
 
