@@ -3,7 +3,7 @@
 use std::process::exit;
 use nalgebra::{Vector2, Vector3, Vector4};
 
-#[derive(Default, Clone)]
+#[derive(Default, Clone, Debug)]
 pub struct Triangle {
     pub v: [Vector4<f64>; 3],
     pub color: [Vector3<f64>; 3],

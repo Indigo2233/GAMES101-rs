@@ -165,7 +165,7 @@ impl Rasterizer {
                     }
                 }
             }
-            break
+            // break;
         }
     }
     fn interpolate3(a: f64, b: f64, c: f64, vert1: Vector3<f64>, vert2: Vector3<f64>, vert3: Vector3<f64>, weight: f64) -> Vector3<f64> {
@@ -183,6 +183,13 @@ impl Rasterizer {
         let mm: Vec<Vector4<f64>> = (0..3).map(|i| view * model * t.v[i]).collect();
         let view_space_pos: Vec<Vector3<f64>> = mm.iter().map(|v| v.xyz()).collect();
         let mut v: Vec<Vector4<f64>> = (0..3).map(|i| mvp * t.v[i]).collect();
+
+        // println!("{:?}", view);
+        // println!("{:?}", model);
+        // println!("{:?}", mvp);
+        //
+        // println!("{:?}", mm);
+        // println!("{:?}", view_space_pos);
 
         for vec in v.iter_mut() {
             vec.x /= vec.w;

@@ -19,7 +19,7 @@ pub(crate) fn get_model_matrix(rotation_angle: f64) -> Matrix4<f64> {
     model[(0, 0)] = rad.cos();
     model[(2, 2)] = model[(0, 0)];
     model[(0, 2)] = rad.sin();
-    model[(2, 0)] = -model[(0, 1)];
+    model[(2, 0)] = -model[(0, 2)];
     let mut scale: Matrix4<f64> = Matrix4::identity();
     scale[(0, 0)] = 2.5;
     scale[(1, 1)] = 2.5;
@@ -108,20 +108,16 @@ pub fn phong_fragment_shader(payload: &FragmentShaderPayload) -> Vector3<f64> {
         let l = (light.position - point).normalize();
         let h = (v + l).normalize();
         let rsq = (light.position - point).dot(&(light.position - point));
-        if rsq < 810.0 {
-            println!("{:?}", light.position);
-            print!("{:?}", point);
-            println!("{rsq} ");
-        }
+        // if rsq < 810.0 {
+        //     println!("{:?}", light.position);
+        //     print!("{:?}", point);
+        //     println!("{rsq} ");
+        // }
         let df = normal.normalize().dot(&l);
 
         let ld = kd.component_mul(&(light.intensity / rsq)) * df.max(0.0);
         let ls = h.dot(&normal).powf(p) * ks.component_mul(&(light.intensity / rsq));
         result_color += la + ld + ls;
-        // if ls.norm() > 0.7 {
-        //     print!("{:?}", ld);
-        //     println!("{} ", ls[0] as f32);
-        // }
     }
     result_color * 255.0
 }
