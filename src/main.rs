@@ -31,9 +31,9 @@ fn main() -> Result<()> {
     let ags: Vec<String> = env::args().collect();
     if ags.len() >= 2 { filename = ags[1].clone(); }
     if ags.len() >= 3 {
-        let (ashader, t) =
+        let (shader, t) =
             choose_shader_texture(&ags[2], &obj_path);
-        active_shader = ashader;
+        active_shader = shader;
         if let Some(tx) = t {
             tex = tx;
         }
