@@ -10,7 +10,7 @@ pub struct Texture {
 
 impl Texture {
     pub fn new(name: &str) -> Self {
-        let img_data = imread(name, IMREAD_COLOR).unwrap();
+        let img_data = imread(name, IMREAD_COLOR).expect("Image reading error!");
         let width = img_data.cols() as usize;
         let height = img_data.rows() as usize;
         Texture {
@@ -30,6 +30,6 @@ impl Texture {
         let v_img = (1.0 - v) * self.height as f64;
         let color: &VecN<u8, 3> = self.img_data.at_2d(v_img as i32, u_img as i32).unwrap();
 
-        Vector3::new(color[0] as f64 / 255.0, color[1] as f64 / 255.0, color[2] as f64 / 255.0)
+        Vector3::new(color[2] as f64, color[1] as f64, color[0] as f64)
     }
 }

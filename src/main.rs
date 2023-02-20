@@ -6,67 +6,16 @@ mod shader;
 
 extern crate opencv;
 
-#[link(name = "objloader")]
-extern "C" {
-    fn create_new_loader() -> *const c_void;
-    fn delete_loader(loader: *const c_void);
-    fn load_file(loader: *const c_void, file: *const c_char) -> i32;
-    fn loaded_meshes(loader: *const c_void, nmesh: *mut i32) -> *const c_void;
-    fn mesh_at(meshes: *const c_void, idx: usize) -> *const c_void;
-    fn vertex_size_mesh(mesh: *const c_void) -> usize;
-    fn mesh_position_at(mesh: *const c_void, idx: usize) -> *const f32;
-    fn mesh_normal_at(mesh: *const c_void, idx: usize) -> *const f32;
-    fn mesh_texture_at(mesh: *const c_void, idx: usize) -> *const f32;
-}
-
-use std::ffi::{c_char, c_void, CString};
-use std::slice;
-use nalgebra::{Vector3, Vector4};
+use std::env;
+use nalgebra::Vector3;
 use opencv::{
     Result,
 };
 use opencv::core::Vector;
 use crate::rasterizer::{Buffer, Rasterizer};
 use utils::*;
+use crate::shader::FragmentShaderPayload;
 use crate::texture::Texture;
-use crate::triangle::Triangle;
-
-unsafe fn load_triangles() -> Vec<Triangle> {
-    let mut triangles = vec![];
-    let loader = create_new_loader();
-
-    let file: *const c_char = CString::new("./models/spot/spot_triangulated_good.obj").unwrap().into_raw();
-    load_file(loader, file);
-
-    let mut nmesh: i32 = 0;
-    let meshes = loaded_meshes(loader, &mut nmesh as *mut i32);
-    for i in 0..nmesh as usize {
-        let mesh = mesh_at(meshes, i);
-        let sz = vertex_size_mesh(mesh);
-        let mut j = 0;
-        while j < sz {
-            let mut t = Triangle::default();
-            for k in 0..3 {
-                let res: Vec<f64> = slice::from_raw_parts(mesh_position_at(mesh, k + j), 3)
-                    .into_iter().map(|elem| *elem as f64).collect();
-                t.set_vertex(k, Vector4::new(res[0], res[1], res[2], 1.0));
-
-                let res: Vec<f64> = slice::from_raw_parts(mesh_normal_at(mesh, k + j), 3)
-                    .into_iter().map(|elem| *elem as f64).collect();
-                t.set_normal(k, Vector3::new(res[0], res[1], res[2]));
-                let res: Vec<f64> = slice::from_raw_parts(mesh_texture_at(mesh, k + j), 2)
-                    .into_iter().map(|elem| *elem as f64).collect();
-                t.set_tex_coord(k, res[0], res[1]);
-            }
-            j += 3;
-
-            triangles.push(t);
-        }
-    }
-
-    delete_loader(loader);
-    triangles
-}
 
 fn hw3() -> Result<()> {
     let triangles = unsafe { load_triangles() };
@@ -75,10 +24,37 @@ fn hw3() -> Result<()> {
 
     let mut r = Rasterizer::new(700, 700);
     let obj_path = "./models/spot/".to_owned();
-    let filename = "output.png".to_owned();
-    let texture_path = "hmap.jpg".to_owned();
-    let tex = Texture::new(&(obj_path + &texture_path));
-    let mut active_shader = phong_fragment_shader;
+    let mut filename = "output.png".to_owned();
+    let mut texture_path = "hmap.jpg".to_owned();
+    let mut tex = Texture::new(&(obj_path.clone() + &texture_path));
+    let mut active_shader: fn(&FragmentShaderPayload) -> Vector3<f64> = phong_fragment_shader;
+    let ags: Vec<String> = env::args().collect();
+    if ags.len() >= 2 {
+        filename = ags[1].clone();
+        match ags.get(2) {
+            None => {}
+            Some(method) => {
+                if method == "normal" {
+                    println!("Rasterizing using the normal shader");
+                    active_shader = normal_fragment_shader;
+                } else if method == "texture" {
+                    println!("Rasterizing using the normal shader");
+                    active_shader = texture_fragment_shader;
+                    texture_path = "spot_texture.png".to_owned();
+                    tex = Texture::new(&(obj_path + &texture_path));
+                } else if method == "phong" {
+                    println!("Rasterizing using the phong shader");
+                    active_shader = phong_fragment_shader;
+                } else if method == "bump" {
+                    println!("Rasterizing using the bump shader");
+                    active_shader = bump_fragment_shader;
+                } else if method == "displacement" {
+                    println!("Rasterizing using the displacement shader");
+                    active_shader = displacement_fragment_shader;
+                }
+            }
+        }
+    }
     r.set_texture(tex);
 
     let eye_pos = Vector3::new(0.0, 0.0, 10.0);
@@ -101,6 +77,5 @@ fn hw3() -> Result<()> {
 }
 
 fn main() -> Result<()> {
-    // hw2()
     hw3()
 }

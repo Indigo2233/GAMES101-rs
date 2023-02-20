@@ -184,13 +184,6 @@ impl Rasterizer {
         let view_space_pos: Vec<Vector3<f64>> = mm.iter().map(|v| v.xyz()).collect();
         let mut v: Vec<Vector4<f64>> = (0..3).map(|i| mvp * t.v[i]).collect();
 
-        // println!("{:?}", view);
-        // println!("{:?}", model);
-        // println!("{:?}", mvp);
-        //
-        // println!("{:?}", mm);
-        // println!("{:?}", view_space_pos);
-
         for vec in v.iter_mut() {
             vec.x /= vec.w;
             vec.y /= vec.w;
