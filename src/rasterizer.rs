@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use std::rc::Rc;
 
 use nalgebra::{Matrix4, Vector2, Vector3, Vector4};
@@ -25,9 +24,6 @@ pub struct Rasterizer {
     view: Matrix4<f64>,
     projection: Matrix4<f64>,
     texture: Option<Texture>,
-    pos_buf: HashMap<usize, Vec<Vector3<f64>>>,
-    ind_buf: HashMap<usize, Vec<Vector3<usize>>>,
-    col_buf: HashMap<usize, Vec<Vector3<f64>>>,
 
     vert_shader: Option<fn(&VertexShaderPayload) -> Vector3<f64>>,
     fragment_shader: Option<fn(&FragmentShaderPayload) -> Vector3<f64>>,
@@ -35,7 +31,6 @@ pub struct Rasterizer {
     depth_buf: Vec<f64>,
     width: u64,
     height: u64,
-    next_id: usize,
 }
 
 #[derive(Clone, Copy)]
@@ -100,27 +95,6 @@ impl Rasterizer {
         self.fragment_shader = Some(frag_shader);
     }
 
-    fn get_next_id(&mut self) -> usize {
-        let res = self.next_id;
-        self.next_id += 1;
-        res
-    }
-    pub fn load_position(&mut self, positions: &Vec<Vector3<f64>>) -> PosBufId {
-        let id = self.get_next_id();
-        self.pos_buf.insert(id, positions.clone());
-        PosBufId(id)
-    }
-
-    pub fn load_indices(&mut self, indices: &Vec<Vector3<usize>>) -> IndBufId {
-        let id = self.get_next_id();
-        self.ind_buf.insert(id, indices.clone());
-        IndBufId(id)
-    }
-    pub fn load_colors(&mut self, colors: &Vec<Vector3<f64>>) -> ColBufId {
-        let id = self.get_next_id();
-        self.col_buf.insert(id, colors.clone());
-        ColBufId(id)
-    }
     pub fn draw(&mut self, triangles: &Vec<Triangle>) {
         let mvp = self.projection * self.view * self.model;
 

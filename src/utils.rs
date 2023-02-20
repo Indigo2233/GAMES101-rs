@@ -5,6 +5,7 @@ use nalgebra::{Matrix3, Matrix4, Vector3, Vector4};
 use opencv::core::{Mat, MatTraitConst};
 use opencv::imgproc::{COLOR_RGB2BGR, cvt_color};
 use crate::shader::{FragmentShaderPayload, VertexShaderPayload};
+use crate::texture::Texture;
 use crate::triangle::Triangle;
 
 type V3f = Vector3<f64>;
@@ -121,6 +122,30 @@ pub unsafe fn load_triangles() -> Vec<Triangle> {
 
     delete_loader(loader);
     triangles
+}
+
+pub fn choose_shader_texture(method: &str,
+                             obj_path: &str) -> (fn(&FragmentShaderPayload) -> Vector3<f64>, Option<Texture>) {
+    let mut active_shader: fn(&FragmentShaderPayload) -> Vector3<f64> = phong_fragment_shader;
+    let mut tex = None;
+    if method == "normal" {
+        println!("Rasterizing using the normal shader");
+        active_shader = normal_fragment_shader;
+    } else if method == "texture" {
+        println!("Rasterizing using the normal shader");
+        active_shader = texture_fragment_shader;
+        tex = Some(Texture::new(&(obj_path.to_owned() + "spot_texture.png")));
+    } else if method == "phong" {
+        println!("Rasterizing using the phong shader");
+        active_shader = phong_fragment_shader;
+    } else if method == "bump" {
+        println!("Rasterizing using the bump shader");
+        active_shader = bump_fragment_shader;
+    } else if method == "displacement" {
+        println!("Rasterizing using the displacement shader");
+        active_shader = displacement_fragment_shader;
+    }
+    (active_shader, tex)
 }
 
 pub fn vertex_shader(payload: &VertexShaderPayload) -> V3f {

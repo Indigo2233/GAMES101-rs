@@ -17,7 +17,7 @@ use utils::*;
 use crate::shader::FragmentShaderPayload;
 use crate::texture::Texture;
 
-fn hw3() -> Result<()> {
+fn main() -> Result<()> {
     let triangles = unsafe { load_triangles() };
 
     let angle = 140.0;
@@ -25,34 +25,17 @@ fn hw3() -> Result<()> {
     let mut r = Rasterizer::new(700, 700);
     let obj_path = "./models/spot/".to_owned();
     let mut filename = "output.png".to_owned();
-    let mut texture_path = "hmap.jpg".to_owned();
+    let texture_path = "hmap.jpg".to_owned();
     let mut tex = Texture::new(&(obj_path.clone() + &texture_path));
     let mut active_shader: fn(&FragmentShaderPayload) -> Vector3<f64> = phong_fragment_shader;
     let ags: Vec<String> = env::args().collect();
-    if ags.len() >= 2 {
-        filename = ags[1].clone();
-        match ags.get(2) {
-            None => {}
-            Some(method) => {
-                if method == "normal" {
-                    println!("Rasterizing using the normal shader");
-                    active_shader = normal_fragment_shader;
-                } else if method == "texture" {
-                    println!("Rasterizing using the normal shader");
-                    active_shader = texture_fragment_shader;
-                    texture_path = "spot_texture.png".to_owned();
-                    tex = Texture::new(&(obj_path + &texture_path));
-                } else if method == "phong" {
-                    println!("Rasterizing using the phong shader");
-                    active_shader = phong_fragment_shader;
-                } else if method == "bump" {
-                    println!("Rasterizing using the bump shader");
-                    active_shader = bump_fragment_shader;
-                } else if method == "displacement" {
-                    println!("Rasterizing using the displacement shader");
-                    active_shader = displacement_fragment_shader;
-                }
-            }
+    if ags.len() >= 2 { filename = ags[1].clone(); }
+    if ags.len() >= 3 {
+        let (ashader, t) =
+            choose_shader_texture(&ags[2], &obj_path);
+        active_shader = ashader;
+        if let Some(tx) = t {
+            tex = tx;
         }
     }
     r.set_texture(tex);
@@ -74,8 +57,4 @@ fn hw3() -> Result<()> {
 
     opencv::imgcodecs::imwrite(&filename, &image, &v).unwrap();
     Ok(())
-}
-
-fn main() -> Result<()> {
-    hw3()
 }
