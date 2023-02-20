@@ -1,14 +1,11 @@
 extern crate opencv;
 
-use std::borrow::BorrowMut;
-use nalgebra::{Vector2, Vector3};
-use opencv::{
-    Result,
-};
-use opencv::core::{CV_8UC3, Mat, MatTrait, MatTraitConst, Point, Scalar, VecN};
-use opencv::highgui::{EVENT_LBUTTONDOWN, imshow, MouseCallback, named_window, set_mouse_callback, wait_key, WINDOW_AUTOSIZE};
+use nalgebra::Vector2;
+use opencv::core::{CV_8UC3, Mat, MatTrait, Point, Scalar, VecN};
+use opencv::highgui::{EVENT_LBUTTONDOWN, imshow, named_window, set_mouse_callback, wait_key, WINDOW_AUTOSIZE};
 use opencv::imgproc::{circle, COLOR_RGB2BGR, cvt_color};
 
+type V2f = Vector2<f64>;
 
 static mut CONTROL_POINTS: Vec<Vector2<i32>> = vec![];
 
@@ -20,7 +17,7 @@ fn mouse_handler(event: i32, x: i32, y: i32, _flags: i32) {
     }
 }
 
-fn naive_bezier(points: &Vec<Vector2<f64>>, win: &mut Mat) {
+fn naive_bezier(points: &Vec<V2f>, win: &mut Mat) {
     let p0 = points[0];
     let p1 = points[1];
     let p2 = points[2];
@@ -34,7 +31,7 @@ fn naive_bezier(points: &Vec<Vector2<f64>>, win: &mut Mat) {
     }
 }
 
-fn recursive_bezier(control_points: &Vec<Vector2<f64>>, t: f64) -> Vector2<f64> {
+fn recursive_bezier(control_points: &Vec<V2f>, t: f64) -> V2f {
     let mut buffer = control_points.clone();
     let iter = control_points.len();
     for i in 0..iter - 1 {
@@ -45,7 +42,7 @@ fn recursive_bezier(control_points: &Vec<Vector2<f64>>, t: f64) -> Vector2<f64> 
     buffer[0]
 }
 
-fn bezier(points: &Vec<Vector2<f64>>, win: &mut Mat) {
+fn bezier(points: &Vec<V2f>, win: &mut Mat) {
     for i in 0..1000 {
         let t = i as f64 / 1000.0;
         let res = recursive_bezier(points, t);
@@ -70,13 +67,13 @@ fn main() {
             }
         }
         if unsafe { CONTROL_POINTS.len() } == 4 {
-            let control_points: Vec<Vector2<f64>> = unsafe {
+            let control_points: Vec<V2f> = unsafe {
                 CONTROL_POINTS.iter().map(|v| Vector2::new(v.x as f64, v.y as f64)).collect()
             };
             naive_bezier(&control_points, &mut win);
             bezier(&control_points, &mut win);
             imshow("Bezier Curve", &win).unwrap();
-            k = wait_key(0).unwrap();
+            let _ = wait_key(0).unwrap();
             return;
         }
         imshow("Bezier Curve", &win).unwrap();
