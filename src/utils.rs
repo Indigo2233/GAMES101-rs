@@ -3,7 +3,9 @@ use nalgebra::{Matrix4, Vector3};
 use opencv::core::{Mat, MatTraitConst};
 use opencv::imgproc::{COLOR_RGB2BGR, cvt_color};
 
-pub(crate) fn get_view_matrix(eye_pos: Vector3<f64>) -> Matrix4<f64> {
+pub type V3d = Vector3<f64>;
+
+pub(crate) fn get_view_matrix(eye_pos: V3d) -> Matrix4<f64> {
     let mut view: Matrix4<f64> = Matrix4::identity();
     view[(0, 3)] = -eye_pos[0];
     view[(1, 3)] = -eye_pos[1];
@@ -47,7 +49,7 @@ pub(crate) fn get_projection_matrix(eye_fov: f64, aspect_ratio: f64, z_near: f64
 }
 
 
-pub(crate) fn frame_buffer2cv_mat(frame_buffer: &Vec<Vector3<f64>>) -> opencv::core::Mat {
+pub(crate) fn frame_buffer2cv_mat(frame_buffer: &Vec<V3d>) -> opencv::core::Mat {
     let mut image = unsafe {
         Mat::new_rows_cols_with_data(
             700, 700,
