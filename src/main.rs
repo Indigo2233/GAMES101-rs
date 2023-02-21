@@ -1,13 +1,12 @@
 extern crate opencv;
 
 use std::ops::Mul;
-use opencv::core::{CV_8UC3, Mat, MatTrait, Point, Point2d, Point2i, Scalar, VecN};
+use opencv::core::{CV_8UC3, Mat, MatTrait, Point, Point2d, Point2i, Scalar, Vec3b};
 use opencv::highgui::{imshow, named_window, set_mouse_callback, wait_key,
                       EVENT_LBUTTONDOWN, WINDOW_AUTOSIZE};
 use opencv::imgproc::{circle, cvt_color, COLOR_RGB2BGR};
 
 static mut CONTROL_POINTS: Vec<Point2i> = vec![];
-
 
 fn mouse_handler(event: i32, x: i32, y: i32, _flags: i32) {
     if event == EVENT_LBUTTONDOWN && unsafe { CONTROL_POINTS.len() } < 4 {
@@ -25,7 +24,7 @@ fn naive_bezier(points: &Vec<Point2d>, win: &mut Mat) {
         let t = i as f64 / 1000.0;
         let point = p0.mul((1.0 - t).powf(3.0)) + p1.mul(3.0 * t * (1.0 - t).powf(2.0))
             + p2.mul(3.0 * t.powf(2.0) * (1.0 - t)) + p3.mul(t.powf(3.0));
-        let color = win.at_2d_mut::<VecN<u8, 3>>(point.y as i32, point.x as i32).unwrap();
+        let color = win.at_2d_mut::<Vec3b>(point.y as i32, point.x as i32).unwrap();
         color[2] = 255;
     }
 }
@@ -45,7 +44,7 @@ fn bezier(points: &Vec<Point2d>, win: &mut Mat) {
     for i in 0..1000 {
         let t = i as f64 / 1000.0;
         let res = recursive_bezier(points, t);
-        win.at_2d_mut::<VecN<u8, 3>>(res.y as i32, res.x as i32).unwrap()[1] = 255;
+        win.at_2d_mut::<Vec3b>(res.y as i32, res.x as i32).unwrap()[1] = 255;
     }
 }
 
