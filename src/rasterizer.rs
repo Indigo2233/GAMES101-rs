@@ -110,7 +110,7 @@ impl Rasterizer {
                 Self::set_pixel(height, width, frame_buf, &point, &line_color);
             }
         } else {
-            let (mut x, mut y, ye) = if dx >= 0.0 {
+            let (mut x, mut y, ye) = if dy >= 0.0 {
                 (x1, y1, y2)
             } else {
                 (x2, y2, y1)
