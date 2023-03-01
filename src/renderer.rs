@@ -149,9 +149,9 @@ impl Renderer {
         let mut m = 0;
         for j in 0..scene.height {
             for i in 0..scene.width {
-                let x = 2.0 * scale * image_aspect_ratio / scene.width as f32 * (i as f32 + 0.5)
-                    - scale * image_aspect_ratio;
-                let y = -2.0 * scale / scene.height as f32 * (j as f32 + 0.5) + scale;
+                let x = (2.0 * (i as f32 + 0.5) / scene.width as f32 - 1.0) * scale * image_aspect_ratio;
+                let y = (1.0 - 2.0 * (j as f32 + 0.5) / scene.height as f32) * scale;
+
                 let dir = normalize(&Vector3f::new(x, y, -1.0));
                 framebuffer[m] = cast_ray(&eye_pos, &dir, scene, 0);
                 m += 1;
