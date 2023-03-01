@@ -1,6 +1,6 @@
 use std::ops::{Div, Mul, Sub, Add, Neg, AddAssign};
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, Default, Clone)]
 pub struct Vector3f {
     pub x: f32,
     pub y: f32,
@@ -24,6 +24,21 @@ impl Vector3f {
     }
     pub fn new(x: f32, y: f32, z: f32) -> Self {
         Vector3f { x, y, z }
+    }
+
+    pub fn max(v1: &Vector3f, v2: &Vector3f) -> Vector3f {
+        Vector3f::new(
+            v1.x.max(v2.x),
+            v1.y.max(v2.y),
+            v1.z.max(v2.z),
+        )
+    }
+    pub fn min(v1: &Vector3f, v2: &Vector3f) -> Vector3f {
+        Vector3f::new(
+            v1.x.min(v2.x),
+            v1.y.min(v2.y),
+            v1.z.min(v2.z),
+        )
     }
 }
 

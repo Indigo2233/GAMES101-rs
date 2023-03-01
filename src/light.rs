@@ -6,7 +6,7 @@ pub struct Light {
 }
 
 impl Light {
-   pub fn new(p: &Vector3f, i: &Vector3f) -> Self {
+   pub fn new(p: &Vector3f, i: Vector3f) -> Self {
         Light {
             position: p.clone(),
             intensity: i.clone(),

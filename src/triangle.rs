@@ -1,20 +1,97 @@
-use crate::object::{Attribute, Object};
+use std::ops::Deref;
+use std::rc::Rc;
+use crate::bounds3::Bounds3;
+use crate::bvh::BVHAccel;
+use crate::intersection::Intersection;
+use crate::material::Material;
+use crate::object::{Object};
+use crate::ray::Ray;
+use crate::renderer::EPSILON;
+use crate::utils::load_triangles;
 use crate::vector::{cross, dot, lerp, normalize, Vector2f, Vector3f};
 
+#[derive(Default, Debug, Clone)]
+pub struct Triangle {
+    pub v0: Vector3f,
+    pub v1: Vector3f,
+    pub v2: Vector3f,
+    pub e1: Vector3f,
+    pub e2: Vector3f,
+    pub normal: Vector3f,
+    m: Option<Rc<Material>>,
+}
+
+impl Triangle {
+    pub fn new(v0: Vector3f, v1: Vector3f, v2: Vector3f, m: Option<Rc<Material>>) -> Self {
+        let e1 = &v1 - &v0;
+        let e2 = &v2 - &v0;
+        let normal = normalize(&cross(&e1, &e2));
+        Self { v0, v1, v2, e1, e2, normal, m }
+    }
+}
+
+impl Object for Triangle {
+    fn get_intersection(&self, ray: Ray) -> Intersection {
+        let mut inter = Intersection::new();
+        if dot(&ray.direction, &self.normal) > 0.0 {
+            return inter;
+        }
+        let (u, v, t_tmp): (f64, f64, f64);
+        let pvec = cross(&ray.direction, &self.e2);
+        let det = dot(&self.e1, &pvec) as f64;
+        if det.abs() < EPSILON as f64 { return inter; }
+        let det_inv = 1.0 / det;
+        let tvec = &ray.origin - &self.v0;
+        u = dot(&tvec, &pvec) as f64 * det_inv;
+        if u < 0.0 || u > 1.0 { return inter; }
+        let qvec = cross(&tvec, &self.e1);
+        v = dot(&ray.direction, &qvec) as f64 * det_inv;
+        if v < 0.0 || u + v > 1.0 { return inter; }
+        t_tmp = dot(&self.e2, &qvec) as f64 * det_inv;
+        if t_tmp < 0.0 { return inter; }
+        inter.happened = true;
+        inter.obj = Some(Rc::new(self.clone()));
+        inter.normal = self.normal.clone();
+        inter.coords = ray.at(t_tmp);
+        inter.m = self.m.clone();
+        inter.distance = t_tmp;
+        inter
+    }
+
+    fn get_surface_properties(&self, _p: &Vector3f, _q: &Vector3f, _index: usize, _uv: Vector2f, _st: &mut Vector2f) -> Vector3f {
+        self.normal.clone()
+    }
+
+    fn eval_diffuse_color(&self, _v: &Vector2f) -> Vector3f {
+        Vector3f::same(0.5)
+    }
+
+    fn get_bounds(&self) -> Bounds3 {
+        Bounds3::union_point(&Bounds3::new(self.v0.clone(), self.v1.clone()), &self.v2)
+    }
+}
+
 pub struct MeshTriangle {
-    vertices: Box<Vec<Vector3f>>,
-    vertex_index: Box<Vec<usize>>,
-    st_coordinates: Box<Vec<Vector2f>>,
-    pub(crate) attr: Attribute,
+    pub bounding_box: Bounds3,
+    pub triangles: Vec<Triangle>,
+    pub bvh: Option<Rc<BVHAccel>>,
+    pub m: Option<Rc<Material>>,
 }
 
 impl MeshTriangle {
-    pub fn new(verts: &Vec<Vector3f>, verts_index: &Vec<usize>, st: &Vec<Vector2f>) -> Self {
-        MeshTriangle {
-            vertices: Box::new(verts.clone()),
-            vertex_index: Box::new(verts_index.clone()),
-            st_coordinates: Box::new(st.clone()),
-            attr: Attribute::new(),
+    pub fn from_obj(filename: &str) -> Self {
+        let (bounding_box, triangles) = unsafe { load_triangles(filename) };
+        let mut ptrs: Vec<Rc<dyn Object>> = vec![];
+        for triangle in triangles.iter() {
+            let t = triangle.clone();
+            ptrs.push(Rc::new(t));
+        }
+        let bvh = BVHAccel::default(ptrs);
+        Self {
+            bounding_box,
+            triangles,
+            bvh: Some(Rc::new(bvh)),
+            m: None,
         }
     }
 }
@@ -37,39 +114,15 @@ fn ray_triangle_intersect(v0: &Vector3f, v1: &Vector3f, v2: &Vector3f,
 }
 
 impl Object for MeshTriangle {
-    fn intersect(&self, orig: &Vector3f, dir: &Vector3f) -> Option<(f32, usize, Vector2f)> {
-        let mut intersect = false;
-        let (mut tnear, mut uv, mut index) = (0.0, Vector2f::zeros(), 0);
-        for k in 0..self.vertex_index.len() / 3 {
-            let v0 = &self.vertices[self.vertex_index[k * 3]];
-            let v1 = &self.vertices[self.vertex_index[k * 3 + 1]];
-            let v2 = &self.vertices[self.vertex_index[k * 3 + 2]];
-            if let Some((t, u, v)) = ray_triangle_intersect(v0, v1, v2, orig, dir) {
-                tnear = t;
-                uv.x = u;
-                uv.y = v;
-                index = k;
-                intersect |= true;
-            }
-        }
-        if intersect {
-            Some((tnear, index, uv))
-        } else { None }
+    fn get_intersection(&self, ray: Ray) -> Intersection {
+        if self.bvh.is_some() {
+            self.bvh.as_ref().unwrap().intersect(&ray)
+        } else { Intersection::new() }
     }
 
     fn get_surface_properties(&self, _p: &Vector3f, _q: &Vector3f,
-                              index: usize, uv: Vector2f, st: &mut Vector2f) -> Vector3f {
-        let v0 = &self.vertices[self.vertex_index[index * 3]];
-        let v1 = &self.vertices[self.vertex_index[index * 3 + 1]];
-        let v2 = &self.vertices[self.vertex_index[index * 3 + 2]];
-        let e0 = normalize(&(v1 - v0));
-        let e1 = normalize(&(v2 - v0));
-        let normal = normalize(&cross(&e0, &e1));
-        let st0 = &self.st_coordinates[self.vertex_index[index * 3]];
-        let st1 = &self.st_coordinates[self.vertex_index[index * 3 + 1]];
-        let st2 = &self.st_coordinates[self.vertex_index[index * 3 + 2]];
-        *st = st0 * (1.0 - uv.x - uv.y) + st1 * uv.x + st2 * uv.y;
-        normal
+                              _index: usize, _uv: Vector2f, _st: &mut Vector2f) -> Vector3f {
+        Vector3f::zeros()
     }
 
     fn eval_diffuse_color(&self, st: &Vector2f) -> Vector3f {
@@ -79,8 +132,7 @@ impl Object for MeshTriangle {
         lerp(&Vector3f::new(0.815, 0.235, 0.031), &Vector3f::new(0.937, 0.937, 0.231), pattern)
     }
 
-    fn attribute(&self) -> &Attribute {
-        &self.attr
+    fn get_bounds(&self) -> Bounds3 {
+        self.bounding_box.clone()
     }
 }
-

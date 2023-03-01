@@ -20,6 +20,7 @@ pub fn solve_quadratic(a: f32, b: f32, c: f32) -> Option<(f32, f32)> {
     if x0 < x1 { Some((x0, x1)) } else { Some((x1, x0)) }
 }
 
+#[derive(Debug)]
 pub enum MaterialType {
     DiffuseAndGlossy,
     ReflectionAndRefraction,
