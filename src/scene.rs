@@ -9,6 +9,7 @@ use crate::ray::Ray;
 use crate::vector::{dot, normalize, Vector2f, Vector3f};
 use crate::intersection::Intersection;
 use crate::renderer::EPSILON;
+use crate::triangle::MeshTriangle;
 
 pub struct Scene {
     pub width: i32,
@@ -16,9 +17,9 @@ pub struct Scene {
     pub fov: f64,
     pub background_color: Vector3f,
     pub max_depth: i32,
-    objects: Vec<Rc<dyn Object>>,
+    objects: Vec<Rc<MeshTriangle>>,
     lights: Vec<Box<Light>>,
-    bvh: Option<Rc<BVHAccel>>,
+    bvh: Option<Rc<BVHAccel<MeshTriangle>>>,
 }
 
 impl Scene {
@@ -34,17 +35,17 @@ impl Scene {
             bvh: None,
         }
     }
-    pub fn add_obj(&mut self, object: Rc<dyn Object>) {
+    pub fn add_obj(&mut self, object: Rc<MeshTriangle>) {
         self.objects.push(object);
     }
     pub fn add_light(&mut self, light: Box<Light>) {
         self.lights.push(light);
     }
 
-    #[allow(dead_code)]
-    pub fn objects(&self) -> &Vec<Rc<dyn Object>> {
-        &self.objects
-    }
+    // #[allow(dead_code)]
+    // pub fn objects(&self) -> &Vec<Rc<dyn Object>> {
+    //     &self.objects
+    // }
     pub fn lights(&self) -> &Vec<Box<Light>> {
         &self.lights
     }

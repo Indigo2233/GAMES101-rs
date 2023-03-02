@@ -12,7 +12,7 @@ pub struct Ray {
 
 impl Ray {
     pub fn new(origin: Vector3f, direction: Vector3f, t: f64) -> Self {
-        let direction_inv = Vector3f::new(1.0 / direction.x, 1.0 / direction.x, 1.0 / direction.x);
+        let direction_inv = Vector3f::new(1.0 / direction.x, 1.0 / direction.y, 1.0 / direction.z);
         let t_min = 0.0;
         let t_max = f64::MAX;
         Self { origin, direction, direction_inv, t, t_min, t_max }

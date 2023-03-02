@@ -49,16 +49,15 @@ pub unsafe fn load_triangles(filename: &str) -> (Bounds3, Vec<Triangle>) {
         for k in 0..3 {
             let vert: Vec<f64> = slice::from_raw_parts(mesh_position_at(mesh, k + j), 3)
                 .into_iter().map(|elem| *elem as f64).collect();
-            face_vertices[k] = Vector3f::new(vert[0] as f32, vert[1] as f32, vert[2] as f32);
+            face_vertices[k] = Vector3f::new(vert[0] as f32, vert[1] as f32, vert[2] as f32) * 60.0;
             min_vert = Vector3f::min(&min_vert, &face_vertices[k]);
-            max_vert = Vector3f::min(&max_vert, &face_vertices[k]);
+            max_vert = Vector3f::max(&max_vert, &face_vertices[k]);
         }
         j += 3;
         let [v0, v1, v2] = face_vertices;
         triangles.push(Triangle::new(v0, v1, v2, Some(mat.clone())));
     }
     let bounding_box = Bounds3::new(min_vert, max_vert);
-
     delete_loader(loader);
     (bounding_box, triangles)
 }

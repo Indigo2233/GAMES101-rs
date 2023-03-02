@@ -14,7 +14,7 @@ impl Renderer {
         let mut framebuffer = vec!(Vector3f::new(0.6, 0.7, 0.9); (scene.width * scene.height) as usize);
         let scale = (scene.fov * 0.5).to_radians().tan() as f32;
         let image_aspect_ratio = scene.width as f32 / scene.height as f32;
-        let eye_pos = Vector3f::same(0.0);
+        let eye_pos = Vector3f::new(-1.0, 5.0, 10.0);
         let mut m = 0;
         for j in 0..scene.height {
             for i in 0..scene.width {

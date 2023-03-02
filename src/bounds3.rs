@@ -2,7 +2,7 @@ use std::mem::swap;
 use crate::ray::Ray;
 use crate::vector::Vector3f;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Bounds3 {
     pub p_min: Vector3f,
     pub p_max: Vector3f,
@@ -68,6 +68,7 @@ impl Bounds3 {
         if dir_neg[2] { swap(&mut t_min.z, &mut t_max.z); }
         let t_enter = t_min.x.max(t_min.y).max(t_min.z);
         let t_exit = t_max.x.min(t_max.y).min(t_max.z);
+
         t_enter < t_exit && t_exit >= 0.0
     }
     pub fn union_bounds(b1: &Bounds3, b2: &Bounds3) -> Bounds3 {
