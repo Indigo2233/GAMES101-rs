@@ -417,11 +417,11 @@ namespace objl
         // Default Constructor
         Loader()
         {
-            std::cout << "constructing!\n";
+            std::cout << "Constructing Object Loader!\n";
         }
         ~Loader()
         {
-            std::cout << "deleting!\n";
+            std::cout << "Deleting Object Loader!\n";
             LoadedMeshes.clear();
         }
 
