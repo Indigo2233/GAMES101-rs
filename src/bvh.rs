@@ -1,19 +1,18 @@
-use std::any::Any;
 use std::rc::Rc;
+use std::time::Instant;
 use crate::bounds3::{Axis, Bounds3};
 use crate::intersection::Intersection;
 use crate::object::Object;
 use crate::ray::Ray;
-use crate::triangle::{MeshTriangle, Triangle};
 
-pub struct BVHBuildNode<T: Object> {
+pub struct BVHBuildNode {
     bounds: Bounds3,
-    left: Option<Rc<BVHBuildNode<T>>>,
-    right: Option<Rc<BVHBuildNode<T>>>,
-    object: Option<Rc<T>>,
+    left: Option<Rc<BVHBuildNode>>,
+    right: Option<Rc<BVHBuildNode>>,
+    object: Option<Rc<dyn Object>>,
 }
 
-impl<T: Object> Default for BVHBuildNode<T> {
+impl Default for BVHBuildNode {
     fn default() -> Self {
         BVHBuildNode {
             bounds: Default::default(),
@@ -30,15 +29,16 @@ pub enum SplitMethod {
     SAH,
 }
 
-pub struct BVHAccel<T: Object> {
-    pub root: Option<Rc<BVHBuildNode<T>>>,
+pub struct BVHAccel {
+    pub root: Option<Rc<BVHBuildNode>>,
     pub max_prims_in_node: i32,
     pub split_method: SplitMethod,
-    pub primitives: Vec<Rc<T>>,
+    pub primitives: Vec<Rc<dyn Object>>,
 }
 
-impl<T: Object + 'static> BVHAccel<T> {
-    pub fn new(p: Vec<Rc<T>>, max_prims_in_node: i32, split_method: SplitMethod) -> Self {
+impl BVHAccel {
+    pub fn new(p: Vec<Rc<dyn Object>>, max_prims_in_node: i32, split_method: SplitMethod) -> Self {
+        let start = Instant::now();
         let max_prims_in_node = 255.max(max_prims_in_node);
 
         let mut res = Self {
@@ -50,9 +50,10 @@ impl<T: Object + 'static> BVHAccel<T> {
         if res.primitives.is_empty() { return res; }
 
         res.root = Self::recursive_build(&mut res.primitives);
+        println!("\rBVH Generation complete: \nTime Taken: {:.2} secs\n\n", start.elapsed().as_secs_f32());
         res
     }
-    pub fn default(p: Vec<Rc<T>>) -> Self {
+    pub fn default(p: Vec<Rc<dyn Object>>) -> Self {
         Self::new(p, 1, SplitMethod::Naive)
     }
     pub fn intersect(&self, ray: &Ray) -> Intersection {
@@ -60,7 +61,7 @@ impl<T: Object + 'static> BVHAccel<T> {
         let root = self.root.clone().unwrap();
         BVHAccel::get_intersection(root, ray)
     }
-    pub fn get_intersection(nodes: Rc<BVHBuildNode<T>>, ray: &Ray) -> Intersection {
+    pub fn get_intersection(nodes: Rc<BVHBuildNode>, ray: &Ray) -> Intersection {
         let res = Intersection::new();
         if !nodes.bounds.intersect_p(ray, &ray.direction_inv,
                                      [ray.direction.x < 0.0, ray.direction.y < 0.0, ray.direction.z < 0.]) {
@@ -69,11 +70,7 @@ impl<T: Object + 'static> BVHAccel<T> {
         if nodes.left.is_none() && nodes.right.is_none() {
             return match &nodes.object {
                 None => res,
-                Some(obj) => {
-                    let r = ray.clone();
-                    obj.print_roll();
-                    obj.get_intersection(r)
-                }
+                Some(obj) => obj.get_intersection(ray.clone())
             };
         }
         let hit1 = BVHAccel::get_intersection(nodes.left.as_ref().unwrap().clone(), ray);
@@ -81,8 +78,7 @@ impl<T: Object + 'static> BVHAccel<T> {
         if hit1.distance < hit2.distance { hit1 } else { hit2 }
     }
 
-    pub fn recursively_put(nodes: Rc<BVHBuildNode<T>>) {}
-    pub fn recursive_build(objs: &mut Vec<Rc<T>>) -> Option<Rc<BVHBuildNode<T>>> {
+    pub fn recursive_build(objs: &mut Vec<Rc<dyn Object>>) -> Option<Rc<BVHBuildNode>> {
         let mut node = BVHBuildNode::default();
         let mut bounds = Bounds3::default();
         for i in 0..objs.len() {

@@ -17,9 +17,9 @@ pub struct Scene {
     pub fov: f64,
     pub background_color: Vector3f,
     pub max_depth: i32,
-    objects: Vec<Rc<MeshTriangle>>,
+    objects: Vec<Rc<dyn Object>>,
     lights: Vec<Box<Light>>,
-    bvh: Option<Rc<BVHAccel<MeshTriangle>>>,
+    bvh: Option<Rc<BVHAccel>>,
 }
 
 impl Scene {

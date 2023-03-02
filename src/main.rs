@@ -1,4 +1,5 @@
 use std::rc::Rc;
+use std::time::Instant;
 use crate::light::Light;
 use crate::renderer::Renderer;
 use crate::scene::Scene;
@@ -27,5 +28,8 @@ fn main() {
     scene.add_light(Box::new(Light::new(&Vector3f::new(20.0, 70.0, 20.0), Vector3f::same(1.0))));
     scene.build_bvh();
 
+    let start = Instant::now();
     Renderer::render(&scene);
+    println!("Render complete: ");
+    println!("Time taken: {:.2} s", start.elapsed().as_secs_f32());
 }

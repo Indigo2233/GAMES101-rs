@@ -1,5 +1,6 @@
 use crate::vector::Vector3f;
 
+#[allow(dead_code)]
 #[derive(Debug, Clone)]
 pub struct Ray {
     pub origin: Vector3f,
