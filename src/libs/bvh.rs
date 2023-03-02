@@ -99,11 +99,9 @@ impl BVHAccel {
                 &node.right.as_ref().unwrap().bounds,
             );
         } else {
-            let mut centroid_bounds = Bounds3::default();
-            for i in 0..objs.len() {
-                centroid_bounds = Bounds3::union_point(&centroid_bounds,
-                                                       &objs[i].get_bounds().centroid());
-            }
+            let centroid_bounds = objs.iter().fold(
+                Bounds3::default(),
+                |b, obj: &Rc<dyn Object>| { Bounds3::union_point(&b, &obj.get_bounds().centroid()) });
             let dim = centroid_bounds.max_extent();
             let half = objs.len() / 2;
             let (l, m, r) = match dim {

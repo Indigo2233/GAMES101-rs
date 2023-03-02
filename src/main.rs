@@ -17,7 +17,7 @@ fn main() {
     scene.build_bvh();
 
     let start = Instant::now();
-    Renderer::render(&scene);
+    Renderer::render(&scene).unwrap();
     println!("Render complete: ");
     println!("Time taken: {:.2} s", start.elapsed().as_secs_f32());
 }

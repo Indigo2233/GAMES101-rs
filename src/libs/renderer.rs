@@ -1,5 +1,5 @@
 use std::fs::File;
-use std::io::Write;
+use std::io::{BufWriter, Error, Write};
 use super::global::{clamp, update_progress};
 use super::ray::Ray;
 use super::scene::Scene;
@@ -10,8 +10,8 @@ pub struct Renderer;
 pub static EPSILON: f32 = 0.00001;
 
 impl Renderer {
-    pub fn render(scene: &Scene) {
-        let mut framebuffer = vec!(Vector3f::new(0.6, 0.7, 0.9); (scene.width * scene.height) as usize);
+    pub fn render(scene: &Scene) -> Result<(), Error> {
+        let mut framebuffer = vec!(Vector3f::zeros(); (scene.width * scene.height) as usize);
         let scale = (scene.fov * 0.5).to_radians().tan() as f32;
         let image_aspect_ratio = scene.width as f32 / scene.height as f32;
         let eye_pos = Vector3f::new(-1.0, 5.0, 10.0);
@@ -29,14 +29,15 @@ impl Renderer {
             update_progress(j as f64 / scene.height as f64);
         }
         update_progress(1.0);
-        let mut file = File::create("binary.ppm").unwrap();
-        file.write_all(format!("P6\n{} {}\n255\n", scene.width, scene.height).as_bytes()).unwrap();
-        let mut color = [0u8, 0, 0];
+        let mut file = BufWriter::new(File::create("binary.ppm")?);
+        file.write_all(format!("P6\n{} {}\n255\n", scene.width, scene.height).as_bytes())?;
+        let mut color = [0, 0, 0];
         for i in 0..scene.height * scene.width {
             color[0] = (255.0 * clamp(0.0, 1.0, framebuffer[i as usize].x)) as u8;
             color[1] = (255.0 * clamp(0.0, 1.0, framebuffer[i as usize].y)) as u8;
             color[2] = (255.0 * clamp(0.0, 1.0, framebuffer[i as usize].z)) as u8;
-            file.write_all(&color).unwrap();
+            file.write(&color).unwrap();
         }
+        Ok(())
     }
 }

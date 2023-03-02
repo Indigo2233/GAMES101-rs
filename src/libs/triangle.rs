@@ -72,7 +72,6 @@ impl Object for Triangle {
 
 pub struct MeshTriangle {
     pub bounding_box: Bounds3,
-    pub triangles: Vec<Triangle>,
     pub bvh: Option<Rc<BVHAccel>>,
     pub m: Option<Rc<Material>>,
 }
@@ -80,15 +79,10 @@ pub struct MeshTriangle {
 impl MeshTriangle {
     pub fn from_obj(filename: &str) -> Self {
         let (bounding_box, triangles) = unsafe { load_triangles(filename) };
-        let mut ptrs: Vec<Rc<dyn Object>> = vec![];
-        for triangle in triangles.iter() {
-            let t = triangle.clone();
-            ptrs.push(Rc::new(t));
-        }
+        let ptrs: Vec<Rc<dyn Object>> = triangles.into_iter().map(|t| Rc::new(t) as Rc<dyn Object>).collect();
         let bvh = BVHAccel::default(ptrs);
         Self {
             bounding_box,
-            triangles,
             bvh: Some(Rc::new(bvh)),
             m: None,
         }
