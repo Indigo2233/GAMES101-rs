@@ -1,4 +1,4 @@
-use std::fmt::{Display, Formatter, write};
+use std::fmt::{Display, Formatter};
 use std::ops::{Div, Mul, Sub, Add, Neg, AddAssign};
 
 #[derive(Debug, Default, Clone)]

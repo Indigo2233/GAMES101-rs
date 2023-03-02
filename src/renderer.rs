@@ -1,19 +1,9 @@
 use std::fs::File;
 use std::io::Write;
-use std::mem::swap;
-use std::rc::Rc;
-use crate::global::{clamp, MaterialType, update_progress};
-use crate::object::Object;
+use crate::global::clamp;
 use crate::ray::Ray;
 use crate::scene::Scene;
-use crate::vector::{dot, normalize, Vector2f, Vector3f};
-
-struct HitPayload {
-    pub t_near: f32,
-    pub index: usize,
-    pub uv: Vector2f,
-    pub hit_obj: Rc<dyn Object>,
-}
+use crate::vector::{normalize, Vector3f};
 
 pub struct Renderer;
 

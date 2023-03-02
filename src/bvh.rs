@@ -1,4 +1,3 @@
-use std::process::exit;
 use std::rc::Rc;
 use crate::bounds3::{Axis, Bounds3};
 use crate::intersection::Intersection;
@@ -13,8 +12,7 @@ pub struct BVHBuildNode {
     object: Option<Rc<dyn Object>>,
 }
 
-struct BVHPrimitiveInfo;
-
+#[allow(dead_code)]
 pub enum SplitMethod {
     Naive,
     SAH,

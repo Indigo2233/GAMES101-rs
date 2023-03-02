@@ -1,8 +1,5 @@
 use crate::bounds3::Bounds3;
-use crate::global::MaterialType;
-use crate::global::MaterialType::DiffuseAndGlossy;
 use crate::intersection::Intersection;
-use crate::material::Material;
 use crate::vector::{Vector2f, Vector3f};
 use crate::ray::Ray;
 

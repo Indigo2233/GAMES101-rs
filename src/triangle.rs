@@ -1,4 +1,3 @@
-use std::ops::Deref;
 use std::rc::Rc;
 use crate::bounds3::Bounds3;
 use crate::bvh::BVHAccel;
@@ -93,23 +92,6 @@ impl MeshTriangle {
             bvh: Some(Rc::new(bvh)),
             m: None,
         }
-    }
-}
-
-fn ray_triangle_intersect(v0: &Vector3f, v1: &Vector3f, v2: &Vector3f,
-                          orig: &Vector3f, dir: &Vector3f) -> Option<(f32, f32, f32)> {
-    let e1 = v1 - v0;
-    let e2 = v2 - v0;
-    let s = orig - v0;
-    let s1 = cross(dir, &e2);
-    let s2 = cross(&s, &e1);
-    let Vector3f { x: t, y: u, z: v } =
-        Vector3f::new(dot(&s2, &e2), dot(&s1, &s), dot(&s2, dir))
-            / dot(&s1, &e1);
-    if t >= 0.0 && u >= 0.0 && v >= 0.0 && u + v <= 1.0 {
-        Some((t, u, v))
-    } else {
-        None
     }
 }
 

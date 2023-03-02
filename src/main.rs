@@ -1,10 +1,9 @@
 use std::rc::Rc;
-use crate::global::MaterialType::{DiffuseAndGlossy, ReflectionAndRefraction};
 use crate::light::Light;
 use crate::renderer::Renderer;
 use crate::scene::Scene;
 use crate::triangle::MeshTriangle;
-use crate::vector::{Vector2f, Vector3f};
+use crate::vector::Vector3f;
 
 mod triangle;
 mod object;

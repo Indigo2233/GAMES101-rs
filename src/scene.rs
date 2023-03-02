@@ -1,6 +1,5 @@
 use std::mem::swap;
 use std::ops::Neg;
-use std::process::exit;
 use std::rc::Rc;
 use crate::bvh::{BVHAccel, SplitMethod};
 use crate::global::{clamp, MaterialType};
@@ -10,9 +9,6 @@ use crate::ray::Ray;
 use crate::vector::{dot, normalize, Vector2f, Vector3f};
 use crate::intersection::Intersection;
 use crate::renderer::EPSILON;
-
-
-static K_INF: f32 = f32::MAX;
 
 pub struct Scene {
     pub width: i32,
@@ -45,6 +41,7 @@ impl Scene {
         self.lights.push(light);
     }
 
+    #[allow(dead_code)]
     pub fn objects(&self) -> &Vec<Rc<dyn Object>> {
         &self.objects
     }
@@ -108,7 +105,6 @@ impl Scene {
                     } else { &hit_point - &normal * EPSILON };
                     for light in scene.lights() {
                         let mut light_dir = &light.position - &hit_point;
-                        let light_dist2 = dot(&light_dir, &light_dir);
                         light_dir = normalize(&light_dir);
                         let l_dot_n = (0.0_f32).max(dot(&light_dir, &normal));
                         let ray = Ray::new(shadow_point_orig.clone(), light_dir.clone(), 0.0);

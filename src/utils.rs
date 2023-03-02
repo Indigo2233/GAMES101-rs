@@ -19,8 +19,6 @@ extern "C" {
     fn mesh_at(meshes: *const c_void, idx: usize) -> *const c_void;
     fn vertex_size_mesh(mesh: *const c_void) -> usize;
     fn mesh_position_at(mesh: *const c_void, idx: usize) -> *const f32;
-    fn mesh_normal_at(mesh: *const c_void, idx: usize) -> *const f32;
-    fn mesh_texture_at(mesh: *const c_void, idx: usize) -> *const f32;
 }
 
 pub unsafe fn load_triangles(filename: &str) -> (Bounds3, Vec<Triangle>) {

@@ -16,6 +16,7 @@ impl Bounds3 {
         let p_max = Vector3f::new(p1.x.max(p2.x), p1.y.max(p2.y), p1.z.max(p2.z));
         Self { p_min, p_max }
     }
+    #[allow(dead_code)]
     pub fn empty(p: Vector3f) -> Self {
         Self { p_min: p.clone(), p_max: p }
     }
@@ -25,35 +26,35 @@ impl Bounds3 {
         let d = self.diagonal();
         if d.x > d.y && d.x > d.z { Axis::X } else if d.y > d.z { Axis::Y } else { Axis::Z }
     }
+    #[allow(dead_code)]
     pub fn surface_area(&self) -> f64 {
         let d = self.diagonal();
         2.0 * (d.x * d.y + d.y * d.z + d.z * d.x) as f64
     }
     pub fn centroid(&self) -> Vector3f { 0.5 * &self.p_min + 0.5 * &self.p_max }
+    #[allow(dead_code)]
     pub fn intersect(&self, b: &Bounds3) -> Bounds3 {
         Bounds3 {
-            p_min: Vector3f::new(self.p_min.x.max(b.p_min.x),
-                                 self.p_min.y.max(b.p_min.y),
-                                 self.p_min.z.max(b.p_min.z), ),
-            p_max: Vector3f::new(self.p_max.x.min(b.p_max.x),
-                                 self.p_max.y.min(b.p_max.y),
-                                 self.p_max.z.min(b.p_max.z), ),
+            p_min: Vector3f::max(&self.p_min, &b.p_min),
+            p_max: Vector3f::min(&self.p_max, &b.p_max),
         }
     }
+    #[allow(dead_code)]
     pub fn offset(&self, p: &Vector3f) -> Vector3f {
         let mut o = p - &self.p_min;
-        if self.p_max.x > self.p_min.x { o.x /= (self.p_max.x - self.p_min.x); }
-        if self.p_max.y > self.p_min.y { o.y /= (self.p_max.y - self.p_min.y); }
-        if self.p_max.z > self.p_min.z { o.z /= (self.p_max.z - self.p_min.z); }
+        if self.p_max.x > self.p_min.x { o.x /= self.p_max.x - self.p_min.x; }
+        if self.p_max.y > self.p_min.y { o.y /= self.p_max.y - self.p_min.y; }
+        if self.p_max.z > self.p_min.z { o.z /= self.p_max.z - self.p_min.z; }
         o
     }
-
+    #[allow(dead_code)]
     pub fn overlaps(b1: &Bounds3, b2: &Bounds3) -> bool {
         let x = b1.p_max.x >= b2.p_min.x && b1.p_min.x <= b2.p_max.x;
         let y = b1.p_max.y >= b2.p_min.y && b1.p_min.y <= b2.p_max.y;
         let z = b1.p_max.z >= b2.p_min.z && b1.p_min.z <= b2.p_max.z;
         x && y && z
     }
+    #[allow(dead_code)]
     pub fn inside(p: &Vector3f, b: &Bounds3) -> bool {
         p.x >= b.p_min.x && p.x <= b.p_max.x &&
             p.y >= b.p_min.y && p.y <= b.p_max.y &&
