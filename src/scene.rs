@@ -1,5 +1,6 @@
 use std::mem::swap;
 use std::ops::Neg;
+use std::process::exit;
 use std::rc::Rc;
 use crate::bvh::{BVHAccel, SplitMethod};
 use crate::global::{clamp, MaterialType};
@@ -56,11 +57,13 @@ impl Scene {
         let objs = self.objects.clone();
         self.bvh = Some(Rc::new(BVHAccel::new(objs, 1, SplitMethod::Naive)));
     }
+
     pub fn intersect(&self, ray: &Ray) -> Intersection {
         if let Some(bvh) = &self.bvh {
             bvh.intersect(ray)
         } else { Intersection::new() }
     }
+
     pub fn cast_ray(&self, ray: &Ray, scene: &Scene, depth: i32) -> Vector3f {
         if depth > scene.max_depth { return Vector3f::zeros(); }
         let intersection = self.intersect(ray);
@@ -72,7 +75,7 @@ impl Scene {
             let mut st = Vector2f::zeros();
             let normal = hit_obj.unwrap().get_surface_properties(&hit_point, &ray.direction, 0, Vector2f::zeros(), &mut st);
             match m.unwrap().material_type {
-                MaterialType::DiffuseAndGlossy => {
+                MaterialType::ReflectionAndRefraction => {
                     let reflection_dir = normalize(&reflect(&ray.direction, &normal));
                     let refraction_dir = normalize(&refract(&ray.direction, &normal, m.unwrap().ior));
                     let reflection_ray_orig = if dot(&reflection_dir, &normal) < 0.0 {
@@ -88,7 +91,7 @@ impl Scene {
                     let kr = fresnel(&ray.direction, &normal, m.unwrap().ior);
                     hit_color = reflection_color * kr + refraction_color * (1.0 - kr);
                 }
-                MaterialType::ReflectionAndRefraction => {
+                MaterialType::Reflection => {
                     let kr = fresnel(&ray.direction, &normal, m.unwrap().ior);
                     let reflection_dir = reflect(&ray.direction, &normal);
                     let reflection_ray_orig = if dot(&reflection_dir, &normal) < 0.0 {
@@ -97,7 +100,7 @@ impl Scene {
                     let ray = Ray::new(reflection_ray_orig, reflection_dir, 0.0);
                     hit_color = self.cast_ray(&ray, scene, depth + 1) * kr;
                 }
-                MaterialType::Reflection => {
+                MaterialType::DiffuseAndGlossy => {
                     let mut light_amt = Vector3f::zeros();
                     let mut specular_color = Vector3f::zeros();
                     let shadow_point_orig = if dot(&ray.direction, &normal) < 0.0 {

@@ -1,3 +1,4 @@
+use std::fmt::{Display, Formatter, write};
 use std::ops::{Div, Mul, Sub, Add, Neg, AddAssign};
 
 #[derive(Debug, Default, Clone)]
@@ -5,6 +6,12 @@ pub struct Vector3f {
     pub x: f32,
     pub y: f32,
     pub z: f32,
+}
+
+impl Display for Vector3f {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "[{}, {}, {}]", self.x, self.y, self.z)
+    }
 }
 
 impl Vector3f {

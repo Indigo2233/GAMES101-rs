@@ -1,3 +1,4 @@
+use std::process::exit;
 use std::rc::Rc;
 use crate::bounds3::{Axis, Bounds3};
 use crate::intersection::Intersection;
@@ -10,9 +11,6 @@ pub struct BVHBuildNode {
     left: Option<Rc<BVHBuildNode>>,
     right: Option<Rc<BVHBuildNode>>,
     object: Option<Rc<dyn Object>>,
-    split_at: i32,
-    first_prim_offset: i32,
-    n_primitives: i32,
 }
 
 struct BVHPrimitiveInfo;
@@ -69,7 +67,8 @@ impl BVHAccel {
         let mut node = BVHBuildNode::default();
         let mut bounds = Bounds3::default();
         for i in 0..objs.len() {
-            bounds = Bounds3::union_bounds(&bounds, &objs[i].get_bounds());
+            let obj_bound = objs[i].get_bounds();
+            bounds = Bounds3::union_bounds(&bounds, &obj_bound);
         }
         if objs.len() == 1 {
             node.bounds = objs[0].get_bounds();
@@ -102,8 +101,10 @@ impl BVHAccel {
             let mut left_shapes = l.to_vec();
             left_shapes.push(m.clone());
             let mut right_shapes = r.to_vec();
-            node.left = BVHAccel::recursive_build(&mut left_shapes);
-            node.right = BVHAccel::recursive_build(&mut right_shapes);
+            let l = BVHAccel::recursive_build(&mut left_shapes);
+            let r = BVHAccel::recursive_build(&mut right_shapes);
+            node.left = l;
+            node.right = r;
             node.bounds = Bounds3::union_bounds(&node.left.as_ref().unwrap().bounds,
                                                 &node.right.as_ref().unwrap().bounds);
         }

@@ -61,7 +61,7 @@ impl Bounds3 {
     }
     pub fn intersect_p(&self, ray: &Ray, inv_dir: &Vector3f, dir_neg: [bool; 3]) -> bool {
         let mut t_min = (&self.p_min - &ray.origin) * inv_dir;
-        let mut t_max = (&self.p_min - &ray.origin) * inv_dir;
+        let mut t_max = (&self.p_max - &ray.origin) * inv_dir;
         if dir_neg[0] { swap(&mut t_min.x, &mut t_max.x); }
         if dir_neg[1] { swap(&mut t_min.y, &mut t_max.y); }
         if dir_neg[2] { swap(&mut t_min.z, &mut t_max.z); }

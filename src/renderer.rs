@@ -36,9 +36,9 @@ impl Renderer {
                 framebuffer[m] = scene.cast_ray(&ray, scene, 0);
                 m += 1;
             }
-            update_progress(j as f64 / scene.height as f64);
+            // update_progress(j as f64 / scene.height as f64);
         }
-        update_progress(1.0);
+        // update_progress(1.0);
         let mut file = File::create("binary.ppm").unwrap();
         file.write_all(format!("P6\n{} {}\n255\n", scene.width, scene.height).as_bytes()).unwrap();
         let mut color = [0u8, 0, 0];
