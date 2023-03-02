@@ -1,7 +1,7 @@
 use std::rc::Rc;
-use crate::material::Material;
-use crate::object::Object;
-use crate::vector::Vector3f;
+use super::material::Material;
+use super::object::Object;
+use super::vector::Vector3f;
 
 pub struct Intersection {
     pub happened: bool,

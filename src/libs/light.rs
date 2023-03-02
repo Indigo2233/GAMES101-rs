@@ -1,4 +1,4 @@
-use crate::vector::Vector3f;
+use super::vector::Vector3f;
 
 pub struct Light {
     pub position: Vector3f,

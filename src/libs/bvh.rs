@@ -1,9 +1,9 @@
 use std::rc::Rc;
 use std::time::Instant;
-use crate::bounds3::{Axis, Bounds3};
-use crate::intersection::Intersection;
-use crate::object::Object;
-use crate::ray::Ray;
+use super::bounds3::{Axis, Bounds3};
+use super::intersection::Intersection;
+use super::object::Object;
+use super::ray::Ray;
 
 pub struct BVHBuildNode {
     bounds: Bounds3,

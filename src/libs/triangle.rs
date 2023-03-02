@@ -1,13 +1,13 @@
 use std::rc::Rc;
-use crate::bounds3::Bounds3;
-use crate::bvh::BVHAccel;
-use crate::intersection::Intersection;
-use crate::material::Material;
-use crate::object::{Object};
-use crate::ray::Ray;
-use crate::renderer::EPSILON;
-use crate::utils::load_triangles;
-use crate::vector::{cross, dot, lerp, normalize, Vector2f, Vector3f};
+use super::bounds3::Bounds3;
+use super::bvh::BVHAccel;
+use super::intersection::Intersection;
+use super::material::Material;
+use super::object::{Object};
+use super::ray::Ray;
+use super::renderer::EPSILON;
+use super::utils::load_triangles;
+use super::vector::{cross, dot, lerp, normalize, Vector2f, Vector3f};
 
 #[derive(Default, Debug, Clone)]
 pub struct Triangle {

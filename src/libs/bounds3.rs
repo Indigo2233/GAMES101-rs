@@ -1,6 +1,6 @@
 use std::mem::swap;
-use crate::ray::Ray;
-use crate::vector::Vector3f;
+use super::ray::Ray;
+use super::vector::Vector3f;
 
 #[derive(Clone, Debug)]
 pub struct Bounds3 {

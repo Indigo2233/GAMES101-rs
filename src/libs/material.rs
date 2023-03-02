@@ -1,5 +1,5 @@
-use crate::global::MaterialType;
-use crate::vector::Vector3f;
+use super::global::MaterialType;
+use super::vector::Vector3f;
 
 #[derive(Debug)]
 pub struct Material {

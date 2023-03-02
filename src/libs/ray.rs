@@ -1,4 +1,4 @@
-use crate::vector::Vector3f;
+use super::vector::Vector3f;
 
 #[allow(dead_code)]
 #[derive(Debug, Clone)]

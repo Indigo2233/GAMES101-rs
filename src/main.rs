@@ -1,24 +1,12 @@
 use std::rc::Rc;
 use std::time::Instant;
-use crate::light::Light;
-use crate::renderer::Renderer;
-use crate::scene::Scene;
-use crate::triangle::MeshTriangle;
-use crate::vector::Vector3f;
+use libs::light::Light;
+use libs::renderer::Renderer;
+use libs::scene::Scene;
+use libs::triangle::MeshTriangle;
+use libs::vector::Vector3f;
 
-mod triangle;
-mod object;
-mod global;
-mod vector;
-mod light;
-mod scene;
-mod renderer;
-mod utils;
-mod material;
-mod ray;
-mod intersection;
-mod bounds3;
-mod bvh;
+mod libs;
 
 fn main() {
     let mut scene = Scene::new(1280, 960);

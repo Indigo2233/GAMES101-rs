@@ -1,7 +1,7 @@
-use crate::bounds3::Bounds3;
-use crate::intersection::Intersection;
-use crate::vector::{Vector2f, Vector3f};
-use crate::ray::Ray;
+use super::bounds3::Bounds3;
+use super::intersection::Intersection;
+use super::vector::{Vector2f, Vector3f};
+use super::ray::Ray;
 
 pub trait Object {
     fn get_intersection(&self, ray: Ray) -> Intersection;

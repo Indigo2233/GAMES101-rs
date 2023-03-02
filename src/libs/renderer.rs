@@ -1,9 +1,9 @@
 use std::fs::File;
 use std::io::Write;
-use crate::global::{clamp, update_progress};
-use crate::ray::Ray;
-use crate::scene::Scene;
-use crate::vector::{normalize, Vector3f};
+use super::global::{clamp, update_progress};
+use super::ray::Ray;
+use super::scene::Scene;
+use super::vector::{normalize, Vector3f};
 
 pub struct Renderer;
 

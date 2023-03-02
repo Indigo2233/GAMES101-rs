@@ -1,15 +1,15 @@
 use std::mem::swap;
 use std::ops::Neg;
 use std::rc::Rc;
-use crate::bvh::{BVHAccel, SplitMethod};
-use crate::global::{clamp, MaterialType};
-use crate::light::Light;
-use crate::object::Object;
-use crate::ray::Ray;
-use crate::vector::{dot, normalize, Vector2f, Vector3f};
-use crate::intersection::Intersection;
-use crate::renderer::EPSILON;
-use crate::triangle::MeshTriangle;
+use super::bvh::{BVHAccel, SplitMethod};
+use super::global::{clamp, MaterialType};
+use super::light::Light;
+use super::object::Object;
+use super::ray::Ray;
+use super::vector::{dot, normalize, Vector2f, Vector3f};
+use super::intersection::Intersection;
+use super::renderer::EPSILON;
+use super::triangle::MeshTriangle;
 
 pub struct Scene {
     pub width: i32,

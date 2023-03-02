@@ -3,11 +3,11 @@ use std::ffi::CString;
 use std::os::raw::{c_char, c_void};
 use std::rc::Rc;
 use std::slice;
-use crate::bounds3::Bounds3;
-use crate::global::MaterialType;
-use crate::material::Material;
-use crate::triangle::Triangle;
-use crate::vector::Vector3f;
+use super::bounds3::Bounds3;
+use super::global::MaterialType;
+use super::material::Material;
+use super::triangle::Triangle;
+use super::vector::Vector3f;
 
 
 #[link(name = "objloader")]
@@ -33,8 +33,7 @@ pub unsafe fn load_triangles(filename: &str) -> (Bounds3, Vec<Triangle>) {
     assert_eq!(nmesh, 1);
     let mesh = mesh_at(meshes, 0);
     let sz = vertex_size_mesh(mesh);
-    let mut min_vert = Vector3f::same(f32::MAX);
-    let mut max_vert = Vector3f::same(f32::MIN);
+    let mut bounding_box = Bounds3::empty(Vector3f::zeros());
     let mut j = 0;
     let mut material = Material::new();
     material.material_type = MaterialType::DiffuseAndGlossy;
@@ -50,14 +49,14 @@ pub unsafe fn load_triangles(filename: &str) -> (Bounds3, Vec<Triangle>) {
             let vert: Vec<f64> = slice::from_raw_parts(mesh_position_at(mesh, k + j), 3)
                 .into_iter().map(|elem| *elem as f64).collect();
             face_vertices[k] = Vector3f::new(vert[0] as f32, vert[1] as f32, vert[2] as f32) * 60.0;
-            min_vert = Vector3f::min(&min_vert, &face_vertices[k]);
-            max_vert = Vector3f::max(&max_vert, &face_vertices[k]);
+            bounding_box.p_min = Vector3f::min(&bounding_box.p_min, &face_vertices[k]);
+            bounding_box.p_max = Vector3f::max(&bounding_box.p_max, &face_vertices[k]);
         }
         j += 3;
         let [v0, v1, v2] = face_vertices;
         triangles.push(Triangle::new(v0, v1, v2, Some(mat.clone())));
     }
-    let bounding_box = Bounds3::new(min_vert, max_vert);
+
     delete_loader(loader);
     (bounding_box, triangles)
 }
