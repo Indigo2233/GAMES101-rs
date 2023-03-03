@@ -15,6 +15,9 @@ impl Renderer {
         let scale = (scene.fov * 0.5).to_radians().tan() as f32;
         let image_aspect_ratio = scene.width as f32 / scene.height as f32;
         let eye_pos = Vector3f::new(-1.0, 5.0, 10.0);
+        let spp = 8;
+        let inv_spp = 1.0 / spp as f32;
+        println!("SPP: {spp}");
         let mut m = 0;
         for j in 0..scene.height {
             for i in 0..scene.width {
@@ -23,7 +26,7 @@ impl Renderer {
 
                 let dir = normalize(&Vector3f::new(x, y, -1.0));
                 let ray = Ray::new(eye_pos.clone(), dir, 0.0);
-                framebuffer[m] = scene.cast_ray(&ray, scene, 0);
+                let _ = (0..spp).into_iter().map(|_| { framebuffer[m] = scene.cast_ray(&ray, 0) * inv_spp; });
                 m += 1;
             }
             update_progress(j as f64 / scene.height as f64);

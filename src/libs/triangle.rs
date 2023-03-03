@@ -1,4 +1,6 @@
 use std::rc::Rc;
+use crate::libs::global::get_random_float;
+use crate::libs::vector::norm;
 use super::bounds3::Bounds3;
 use super::bvh::BVHAccel;
 use super::intersection::Intersection;
@@ -17,6 +19,7 @@ pub struct Triangle {
     pub e1: Vector3f,
     pub e2: Vector3f,
     pub normal: Vector3f,
+    pub area: f32,
     m: Option<Rc<Material>>,
 }
 
@@ -24,8 +27,9 @@ impl Triangle {
     pub fn new(v0: Vector3f, v1: Vector3f, v2: Vector3f, m: Option<Rc<Material>>) -> Self {
         let e1 = &v1 - &v0;
         let e2 = &v2 - &v0;
+        let area = norm(&cross(&e1, &e2)) * 0.5;
         let normal = normalize(&cross(&e1, &e2));
-        Self { v0, v1, v2, e1, e2, normal, m }
+        Self { v0, v1, v2, e1, e2, normal, area, m }
     }
 }
 
@@ -68,23 +72,44 @@ impl Object for Triangle {
     fn get_bounds(&self) -> Bounds3 {
         Bounds3::union_point(&Bounds3::new(self.v0.clone(), self.v1.clone()), &self.v2)
     }
+
+    fn get_area(&self) -> f32 {
+        self.area
+    }
+
+    fn sample(&self) -> (Intersection, f32) {
+        let x = get_random_float().sqrt();
+        let y = get_random_float().sqrt();
+        let mut pos = Intersection::new();
+        pos.coords = &self.v0 * (1.0 - x) + &self.v1 * (x * (1.0 - y)) + &self.v2 * (x * y);
+        let pdf = 1.0 / self.area;
+        (pos, pdf)
+    }
+
+    fn has_emit(&self) -> bool {
+        if let Some(m) = self.m.as_ref() {
+            m.has_emission()
+        } else { false }
+    }
 }
 
 pub struct MeshTriangle {
     pub bounding_box: Bounds3,
     pub bvh: Option<Rc<BVHAccel>>,
     pub m: Option<Rc<Material>>,
+    pub area: f32,
 }
 
 impl MeshTriangle {
-    pub fn from_obj(filename: &str) -> Self {
-        let (bounding_box, triangles) = unsafe { load_triangles(filename) };
+    pub fn from_obj(filename: &str, m: Rc<Material>) -> Self {
+        let (bounding_box, triangles, area) = unsafe { load_triangles(filename, m.clone()) };
         let ptrs: Vec<Rc<dyn Object>> = triangles.into_iter().map(|t| Rc::new(t) as Rc<dyn Object>).collect();
         let bvh = BVHAccel::default(ptrs);
         Self {
             bounding_box,
             bvh: Some(Rc::new(bvh)),
-            m: None,
+            m: Some(m),
+            area,
         }
     }
 }
@@ -111,5 +136,21 @@ impl Object for MeshTriangle {
 
     fn get_bounds(&self) -> Bounds3 {
         self.bounding_box.clone()
+    }
+
+    fn get_area(&self) -> f32 {
+        self.area
+    }
+
+    fn sample(&self) -> (Intersection, f32) {
+        let (mut pos, pdf) = self.bvh.as_ref().unwrap().sample();
+        pos.emit = self.m.as_ref().unwrap().get_emission().clone();
+        (pos, pdf)
+    }
+
+    fn has_emit(&self) -> bool {
+        if let Some(m) = self.m.as_ref() {
+            m.has_emission()
+        } else { false }
     }
 }

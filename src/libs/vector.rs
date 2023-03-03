@@ -201,6 +201,14 @@ impl Div<f32> for Vector3f {
     }
 }
 
+impl Div<f32> for &Vector3f {
+    type Output = Vector3f;
+
+    fn div(self, v: f32) -> Self::Output {
+        Vector3f::new(self.x / v, self.y / v, self.z / v)
+    }
+}
+
 impl Mul<Vector3f> for f32 {
     type Output = Vector3f;
 
@@ -283,6 +291,11 @@ pub fn normalize(v: &Vector3f) -> Vector3f {
         let inv_mag = 1.0 / mag2.sqrt();
         Vector3f::new(v.x * inv_mag, v.y * inv_mag, v.z * inv_mag)
     } else { v.clone() }
+}
+
+pub fn norm(v: &Vector3f) -> f32 {
+    let mag2 = v.x * v.x + v.y * v.y + v.z * v.z;
+    mag2.sqrt()
 }
 
 pub fn dot(a: &Vector3f, b: &Vector3f) -> f32 {

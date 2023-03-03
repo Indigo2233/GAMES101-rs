@@ -1,14 +1,11 @@
-use std::mem::swap;
-use std::ops::Neg;
 use std::rc::Rc;
+use crate::libs::global::get_random_float;
+use crate::libs::vector::norm;
 use super::bvh::{BVHAccel, SplitMethod};
-use super::global::{clamp, MaterialType};
-use super::light::Light;
 use super::object::Object;
 use super::ray::Ray;
-use super::vector::{dot, normalize, Vector2f, Vector3f};
+use super::vector::{dot, normalize,  Vector3f};
 use super::intersection::Intersection;
-use super::renderer::EPSILON;
 use super::triangle::MeshTriangle;
 
 pub struct Scene {
@@ -17,9 +14,9 @@ pub struct Scene {
     pub fov: f64,
     pub background_color: Vector3f,
     pub max_depth: i32,
-    objects: Vec<Rc<dyn Object>>,
-    lights: Vec<Box<Light>>,
+    objects: Vec<Rc<MeshTriangle>>,
     bvh: Option<Rc<BVHAccel>>,
+    russian_roulette: f32,
 }
 
 impl Scene {
@@ -31,28 +28,17 @@ impl Scene {
             background_color: Vector3f::new(0.235294, 0.67451, 0.843137),
             max_depth: 5,
             objects: vec![],
-            lights: vec![],
             bvh: None,
+            russian_roulette: 0.8,
         }
     }
     pub fn add_obj(&mut self, object: Rc<MeshTriangle>) {
         self.objects.push(object);
     }
-    pub fn add_light(&mut self, light: Box<Light>) {
-        self.lights.push(light);
-    }
-
-    // #[allow(dead_code)]
-    // pub fn objects(&self) -> &Vec<Rc<dyn Object>> {
-    //     &self.objects
-    // }
-    pub fn lights(&self) -> &Vec<Box<Light>> {
-        &self.lights
-    }
 
     pub fn build_bvh(&mut self) {
         println!(" - Generating BVH...\n");
-        let objs = self.objects.clone();
+        let objs = self.objects.iter().map(|m| -> Rc<dyn Object> { m.clone() }).collect();
         self.bvh = Some(Rc::new(BVHAccel::new(objs, 1, SplitMethod::Naive)));
     }
 
@@ -62,100 +48,55 @@ impl Scene {
         } else { Intersection::new() }
     }
 
-    pub fn cast_ray(&self, ray: &Ray, scene: &Scene, depth: i32) -> Vector3f {
-        if depth > scene.max_depth { return Vector3f::zeros(); }
-        let intersection = self.intersect(ray);
-        let m = intersection.m.as_ref();
-        let hit_obj = &intersection.obj.as_ref();
-        let mut hit_color = scene.background_color.clone();
-        if intersection.happened {
-            let hit_point = intersection.coords;
-            let mut st = Vector2f::zeros();
-            let normal = hit_obj.unwrap().get_surface_properties(&hit_point, &ray.direction, 0, Vector2f::zeros(), &mut st);
-            match m.unwrap().material_type {
-                MaterialType::ReflectionAndRefraction => {
-                    let reflection_dir = normalize(&reflect(&ray.direction, &normal));
-                    let refraction_dir = normalize(&refract(&ray.direction, &normal, m.unwrap().ior));
-                    let reflection_ray_orig = if dot(&reflection_dir, &normal) < 0.0 {
-                        &hit_point - &normal * EPSILON
-                    } else { &hit_point + &normal * EPSILON };
-                    let refraction_ray_orig = if dot(&refraction_dir, &normal) < 0.0 {
-                        &hit_point - &normal * EPSILON
-                    } else { &hit_point + &normal * EPSILON };
-                    let r1 = Ray::new(reflection_ray_orig, reflection_dir, 0.0);
-                    let r2 = Ray::new(refraction_ray_orig, refraction_dir, 0.0);
-                    let reflection_color = scene.cast_ray(&r1, scene, depth + 1);
-                    let refraction_color = scene.cast_ray(&r2, scene, depth + 1);
-                    let kr = fresnel(&ray.direction, &normal, m.unwrap().ior);
-                    hit_color = reflection_color * kr + refraction_color * (1.0 - kr);
-                }
-                MaterialType::Reflection => {
-                    let kr = fresnel(&ray.direction, &normal, m.unwrap().ior);
-                    let reflection_dir = reflect(&ray.direction, &normal);
-                    let reflection_ray_orig = if dot(&reflection_dir, &normal) < 0.0 {
-                        &hit_point + &normal * EPSILON
-                    } else { &hit_point - &normal * EPSILON };
-                    let ray = Ray::new(reflection_ray_orig, reflection_dir, 0.0);
-                    hit_color = self.cast_ray(&ray, scene, depth + 1) * kr;
-                }
-                MaterialType::DiffuseAndGlossy => {
-                    let mut light_amt = Vector3f::zeros();
-                    let mut specular_color = Vector3f::zeros();
-                    let shadow_point_orig = if dot(&ray.direction, &normal) < 0.0 {
-                        &hit_point + &normal * EPSILON
-                    } else { &hit_point - &normal * EPSILON };
-                    for light in scene.lights() {
-                        let mut light_dir = &light.position - &hit_point;
-                        light_dir = normalize(&light_dir);
-                        let l_dot_n = (0.0_f32).max(dot(&light_dir, &normal));
-                        let ray = Ray::new(shadow_point_orig.clone(), light_dir.clone(), 0.0);
-                        let in_shadow = self.bvh.as_ref().unwrap().intersect(&ray).happened;
-                        light_amt += if in_shadow { Vector3f::zeros() } else { &light.intensity * l_dot_n };
-                        let reflection_dir = reflect(&(-light_dir), &normal);
-
-                        specular_color += ((0.0_f32).max(-dot(&reflection_dir, &ray.direction))).
-                            powf(m.unwrap().specular_exponent) * &light.intensity;
-                    }
-                    hit_color = &light_amt * (hit_obj.unwrap().eval_diffuse_color(&st) * m.unwrap().kd +
-                        specular_color * m.unwrap().ks);
-                }
+    fn sample_light(&self) -> (Intersection, f32) {
+        let emit_area_sum = self.objects.iter().fold(0.0, |acc, obj| {
+            acc + if obj.has_emit() { obj.get_area() } else { 0.0 }
+        });
+        let p = get_random_float() * emit_area_sum;
+        let mut emit_area_sum = 0.0;
+        for object in self.objects.iter() {
+            if !object.has_emit() { continue; }
+            emit_area_sum += object.get_area();
+            if p <= emit_area_sum {
+                return object.sample();
             }
         }
-        hit_color
+        (Intersection::new(), 0.0)
     }
-}
 
-fn reflect(i: &Vector3f, n: &Vector3f) -> Vector3f {
-    i - 2.0 * dot(i, n) * n
-}
+    pub fn cast_ray(&self, ray: &Ray, depth: i32) -> Vector3f {
+        let obj_inter = self.intersect(ray);
+        if !obj_inter.happened { return Vector3f::zeros(); }
 
-fn refract(i: &Vector3f, n: &Vector3f, ior: f32) -> Vector3f {
-    let mut cosi = clamp(-1.0, 1.0, dot(i, n));
-    let mut etai = 1.0;
-    let mut etat = ior;
-    let mut n0 = n.clone();
-    if cosi < 0.0 { cosi = -cosi; } else {
-        swap(&mut etai, &mut etat);
-        n0 = n.neg();
-    }
-    let eta = etai / etat;
-    let k = 1.0 - eta * eta * (1.0 - cosi * cosi);
-    if k < 0.0 { Vector3f::zeros() } else {
-        eta * i + (eta * cosi - k.sqrt()) * n0
-    }
-}
+        let m = obj_inter.m.as_ref().unwrap();
+        if m.has_emission() { return m.get_emission().clone(); }
+        let p = &obj_inter.coords;
+        let normal = normalize(&obj_inter.normal);
+        let wo = &ray.direction;
+        let (light_point, pdf_l) = self.sample_light();
+        let x = &light_point.coords;
+        let ws = normalize(&(x - p));
+        let light_ray = Ray::new(p.clone(), ws, 0.0);
+        let (mut l_dir, mut l_indir) = (Vector3f::zeros(), Vector3f::zeros());
+        let d = norm(&(p - light_point.coords));
+        let light_inter = self.intersect(&light_ray);
+        if light_inter.distance - d as f64 > 0.001 {
+            l_dir = light_point.emit * m.eval(&wo, &light_ray.direction, &normal) *
+                dot(&light_ray.direction, &normal) *
+                dot(&light_ray.direction, &normalize(&(-light_point.normal))) /
+                d.powi(2) / pdf_l;
+        }
+        if get_random_float() > self.russian_roulette { return l_dir; }
 
-fn fresnel(i: &Vector3f, n: &Vector3f, ior: f32) -> f32 {
-    let mut cosi = clamp(-1.0, 1.0, dot(i, n));
-    let mut etai = 1.0;
-    let mut etat = ior;
-    if cosi > 0.0 { swap(&mut etai, &mut etat); }
-    let sint = etai / etat * (0.0_f32).max(1.0 - cosi * cosi).sqrt();
-    if sint >= 1.0 { 1.0 } else {
-        let cost = (0.0_f32).max(1.0 - sint * sint).sqrt();
-        cosi = cosi.abs();
-        let rs = ((etat * cosi) - (etai * cost)) / ((etat * cosi) + (etai * cost));
-        let rp = ((etai * cosi) - (etat * cost)) / ((etai * cosi) + (etat * cost));
-        (rs * rs + rp * rp) / 2.0
+        let wi = normalize(&m.sample(&wo, &normal));
+        let t_ray = Ray::new(p.clone(), wi.clone(), 0.0);
+        let new_inter = self.intersect(&t_ray);
+        if new_inter.happened && !new_inter.m.as_ref().unwrap().has_emission() {
+            let shade = self.cast_ray(&t_ray, depth + 1);
+            l_indir = shade * m.eval(&wo, &wi, &normal) * dot(&wi, &normal) /
+                m.pdf(&wo, &wi, &normal) / self.russian_roulette;
+        }
+
+        l_dir + l_indir
     }
 }

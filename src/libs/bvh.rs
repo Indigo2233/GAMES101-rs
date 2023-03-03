@@ -1,5 +1,8 @@
 use std::rc::Rc;
+use std::thread::sleep;
 use std::time::Instant;
+use crate::libs::global::get_random_float;
+use crate::libs::vector::norm;
 use super::bounds3::{Axis, Bounds3};
 use super::intersection::Intersection;
 use super::object::Object;
@@ -10,6 +13,7 @@ pub struct BVHBuildNode {
     left: Option<Rc<BVHBuildNode>>,
     right: Option<Rc<BVHBuildNode>>,
     object: Option<Rc<dyn Object>>,
+    area: f32,
 }
 
 impl Default for BVHBuildNode {
@@ -19,6 +23,7 @@ impl Default for BVHBuildNode {
             left: None,
             right: None,
             object: None,
+            area: 0.0,
         }
     }
 }
@@ -56,6 +61,21 @@ impl BVHAccel {
     pub fn default(p: Vec<Rc<dyn Object>>) -> Self {
         Self::new(p, 1, SplitMethod::Naive)
     }
+    pub fn get_sample(node: Rc<BVHBuildNode>, p: f32) -> (Intersection, f32) {
+        if node.left.is_none() || node.right.is_none() {
+            let (pos, pdf) = node.object.as_ref().unwrap().sample();
+            return (pos, pdf / node.area);
+        }
+        if p < node.left.as_ref().unwrap().area {
+            Self::get_sample(node.left.clone().unwrap(), p)
+        } else { Self::get_sample(node.right.clone().unwrap(), p - node.left.as_ref().unwrap().area) }
+    }
+    pub fn sample(&self) -> (Intersection, f32) {
+        let p = get_random_float().sqrt() * self.root.as_ref().unwrap().area;
+        let (pos, mut pdf) = Self::get_sample(self.root.clone().unwrap(), p);
+        pdf /= self.root.as_ref().unwrap().area;
+        (pos, pdf)
+    }
     pub fn intersect(&self, ray: &Ray) -> Intersection {
         if self.root.is_none() { return Intersection::new(); }
         let root = self.root.clone().unwrap();
@@ -90,6 +110,7 @@ impl BVHAccel {
             node.object = Some(objs[0].clone());
             node.left = None;
             node.right = None;
+            node.area = objs[0].get_area();
         } else if objs.len() == 2 {
             node.left = BVHAccel::recursive_build(&mut vec![objs[0].clone()]);
             node.right = BVHAccel::recursive_build(&mut vec![objs[1].clone()]);
@@ -98,6 +119,7 @@ impl BVHAccel {
                 &node.left.as_ref().unwrap().bounds,
                 &node.right.as_ref().unwrap().bounds,
             );
+            node.area = node.left.as_ref().unwrap().area + node.right.as_ref().unwrap().area;
         } else {
             let centroid_bounds = objs.iter().fold(
                 Bounds3::default(),
@@ -121,6 +143,7 @@ impl BVHAccel {
             node.right = r;
             node.bounds = Bounds3::union_bounds(&node.left.as_ref().unwrap().bounds,
                                                 &node.right.as_ref().unwrap().bounds);
+            node.area = node.left.as_ref().unwrap().area + node.right.as_ref().unwrap().area;
         }
         Some(Rc::new(node))
     }

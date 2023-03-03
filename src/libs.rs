@@ -2,7 +2,6 @@ pub mod triangle;
 pub mod object;
 pub mod global;
 pub mod vector;
-pub mod light;
 pub mod scene;
 pub mod renderer;
 pub mod utils;

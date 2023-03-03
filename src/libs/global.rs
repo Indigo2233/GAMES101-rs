@@ -8,9 +8,7 @@ pub fn clamp(lo: f32, hi: f32, v: f32) -> f32 {
 #[allow(dead_code)]
 #[derive(Debug)]
 pub enum MaterialType {
-    DiffuseAndGlossy,
-    ReflectionAndRefraction,
-    Reflection,
+    Diffuse,
 }
 
 pub fn update_progress(progress: f64) {
@@ -25,4 +23,8 @@ pub fn update_progress(progress: f64) {
     print!("] {} %", (progress * 100.0) as i32);
     io::stdout().flush().unwrap();
     print!("\r");
+}
+
+pub fn get_random_float() -> f32 {
+    rand::random::<f32>()
 }

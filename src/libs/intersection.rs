@@ -1,4 +1,5 @@
 use std::rc::Rc;
+use crate::libs::vector::{norm, normalize};
 use super::material::Material;
 use super::object::Object;
 use super::vector::Vector3f;
@@ -10,6 +11,7 @@ pub struct Intersection {
     pub distance: f64,
     pub obj: Option<Rc<dyn Object>>,
     pub m: Option<Rc<Material>>,
+    pub emit: Vector3f,
 }
 
 impl Intersection {
@@ -21,6 +23,7 @@ impl Intersection {
             distance: f64::MAX,
             obj: None,
             m: None,
+            emit: Vector3f::zeros(),
         }
     }
 }
