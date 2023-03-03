@@ -33,7 +33,7 @@ pub unsafe fn load_triangles(filename: &str) -> (Bounds3, Vec<Triangle>) {
     assert_eq!(nmesh, 1);
     let mesh = mesh_at(meshes, 0);
     let sz = vertex_size_mesh(mesh);
-    let mut bounding_box = Bounds3::empty(Vector3f::zeros());
+    let mut bounding_box = Bounds3::empty();
     let mut j = 0;
     let mut material = Material::new();
     material.material_type = MaterialType::DiffuseAndGlossy;

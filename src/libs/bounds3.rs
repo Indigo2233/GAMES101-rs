@@ -16,9 +16,8 @@ impl Bounds3 {
         let p_max = Vector3f::new(p1.x.max(p2.x), p1.y.max(p2.y), p1.z.max(p2.z));
         Self { p_min, p_max }
     }
-    #[allow(dead_code)]
-    pub fn empty(p: Vector3f) -> Self {
-        Self { p_min: p.clone(), p_max: p }
+    pub fn empty() -> Self {
+        Self { p_min: Vector3f::same(f32::MAX), p_max: Vector3f::same(f32::MIN) }
     }
 
     pub fn diagonal(&self) -> Vector3f { &self.p_max - &self.p_min }
