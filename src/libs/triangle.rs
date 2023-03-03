@@ -80,7 +80,7 @@ impl Object for Triangle {
 
     fn sample(&self) -> (Intersection, f32) {
         let x = get_random_float().sqrt();
-        let y = get_random_float().sqrt();
+        let y = get_random_float();
         let mut pos = Intersection::new();
         pos.coords = &self.v0 * (1.0 - x) + &self.v1 * (x * (1.0 - y)) + &self.v2 * (x * y);
         let pdf = 1.0 / self.area;

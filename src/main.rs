@@ -27,18 +27,18 @@ fn main() {
     let (red, white, green, light) = (Rc::new(red), Rc::new(white), Rc::new(green), Rc::new(light));
 
 
-    // let floor = MeshTriangle::from_obj(&"./models/cornellbox/floor.obj", white.clone());
-    // let shortbox = MeshTriangle::from_obj(&"./models/cornellbox/shortbox.obj", white.clone());
-    // let tallbox= MeshTriangle::from_obj(&"./models/cornellbox/tallbox.obj", white.clone());
-    // let left = MeshTriangle::from_obj(&"./models/cornellbox/left.obj", red);
-    // let right = MeshTriangle::from_obj(&"./models/cornellbox/right.obj", green);
+    let floor = MeshTriangle::from_obj(&"./models/cornellbox/floor.obj", white.clone());
+    let shortbox = MeshTriangle::from_obj(&"./models/cornellbox/shortbox.obj", white.clone());
+    let tallbox= MeshTriangle::from_obj(&"./models/cornellbox/tallbox.obj", white.clone());
+    let left = MeshTriangle::from_obj(&"./models/cornellbox/left.obj", red);
+    let right = MeshTriangle::from_obj(&"./models/cornellbox/right.obj", green);
     let light_= MeshTriangle::from_obj(&"./models/cornellbox/light.obj", light);
 
-    // scene.add_obj(Rc::new(floor));
-    // scene.add_obj(Rc::new(shortbox));
-    // scene.add_obj(Rc::new(tallbox));
-    // scene.add_obj(Rc::new(left));
-    // scene.add_obj(Rc::new(right));
+    scene.add_obj(Rc::new(floor));
+    scene.add_obj(Rc::new(shortbox));
+    scene.add_obj(Rc::new(tallbox));
+    scene.add_obj(Rc::new(left));
+    scene.add_obj(Rc::new(right));
     scene.add_obj(Rc::new(light_));
 
     scene.build_bvh();

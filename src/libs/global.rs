@@ -26,5 +26,6 @@ pub fn update_progress(progress: f64) {
 }
 
 pub fn get_random_float() -> f32 {
-    rand::random::<f32>()
+    // rand::random::<f32>()
+    0.2
 }

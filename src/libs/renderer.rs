@@ -15,7 +15,7 @@ impl Renderer {
         let scale = (scene.fov * 0.5).to_radians().tan() as f32;
         let image_aspect_ratio = scene.width as f32 / scene.height as f32;
         let eye_pos = Vector3f::new(278.0, 273.0, -800.0);
-        let spp = 8;
+        let spp = 1;
         let inv_spp = 1.0 / spp as f32;
         println!("SPP: {spp}");
         let mut m = 0;

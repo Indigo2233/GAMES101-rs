@@ -62,7 +62,7 @@ impl BVHAccel {
     pub fn get_sample(node: Rc<BVHBuildNode>, p: f32) -> (Intersection, f32) {
         if node.left.is_none() || node.right.is_none() {
             let (pos, pdf) = node.object.as_ref().unwrap().sample();
-            return (pos, pdf / node.area);
+            return (pos, pdf * node.area);
         }
         if p < node.left.as_ref().unwrap().area {
             Self::get_sample(node.left.clone().unwrap(), p)
