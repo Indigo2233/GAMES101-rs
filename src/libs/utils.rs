@@ -2,9 +2,8 @@ use std::ffi::CString;
 use std::os::raw::{c_char, c_void};
 use std::rc::Rc;
 use std::slice;
+use crate::libs::material::Material;
 use super::bounds3::Bounds3;
-use super::global::MaterialType;
-use super::material::Material;
 use super::triangle::Triangle;
 use super::vector::Vector3f;
 
@@ -31,7 +30,7 @@ pub unsafe fn load_triangles(filename: &str, m: Rc<Material>) -> (Bounds3, Vec<T
     assert_eq!(nmesh, 1);
     let mesh = mesh_at(meshes, 0);
     let sz = vertex_size_mesh(mesh);
-    let mut bounding_box = Bounds3::empty(Vector3f::zeros());
+    let mut bounding_box = Bounds3::empty();
     let mut j = 0;
     let mut area = 0.0;
     while j < sz {
@@ -39,9 +38,8 @@ pub unsafe fn load_triangles(filename: &str, m: Rc<Material>) -> (Bounds3, Vec<T
         for k in 0..3 {
             let vert: Vec<f64> = slice::from_raw_parts(mesh_position_at(mesh, k + j), 3)
                 .into_iter().map(|elem| *elem as f64).collect();
-            face_vertices[k] = Vector3f::new(vert[0] as f32, vert[1] as f32, vert[2] as f32) * 60.0;
-            bounding_box.p_min = Vector3f::min(&bounding_box.p_min, &face_vertices[k]);
-            bounding_box.p_max = Vector3f::max(&bounding_box.p_max, &face_vertices[k]);
+            face_vertices[k] = Vector3f::new(vert[0] as f32, vert[1] as f32, vert[2] as f32);
+            bounding_box = Bounds3::union_point(&bounding_box, &face_vertices[k]);
         }
         j += 3;
         let [v0, v1, v2] = face_vertices;

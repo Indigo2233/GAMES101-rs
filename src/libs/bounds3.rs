@@ -1,4 +1,5 @@
 use std::mem::swap;
+use std::process::exit;
 use super::ray::Ray;
 use super::vector::Vector3f;
 
@@ -16,9 +17,8 @@ impl Bounds3 {
         let p_max = Vector3f::new(p1.x.max(p2.x), p1.y.max(p2.y), p1.z.max(p2.z));
         Self { p_min, p_max }
     }
-    #[allow(dead_code)]
-    pub fn empty(p: Vector3f) -> Self {
-        Self { p_min: p.clone(), p_max: p }
+    pub fn empty() -> Self {
+        Self { p_min: Vector3f::same(f32::MAX), p_max: Vector3f::same(f32::MIN) }
     }
 
     pub fn diagonal(&self) -> Vector3f { &self.p_max - &self.p_min }
@@ -69,7 +69,7 @@ impl Bounds3 {
         let t_enter = t_min.x.max(t_min.y).max(t_min.z);
         let t_exit = t_max.x.min(t_max.y).min(t_max.z);
 
-        t_enter < t_exit && t_exit >= 0.0
+        t_enter <= t_exit && t_exit >= 0.0
     }
     pub fn union_bounds(b1: &Bounds3, b2: &Bounds3) -> Bounds3 {
         Bounds3 {

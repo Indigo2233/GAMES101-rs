@@ -1,5 +1,4 @@
 use std::rc::Rc;
-use crate::libs::vector::{norm, normalize};
 use super::material::Material;
 use super::object::Object;
 use super::vector::Vector3f;

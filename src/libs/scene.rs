@@ -24,7 +24,7 @@ impl Scene {
         Self {
             width,
             height,
-            fov: 90.0,
+            fov: 40.0,
             background_color: Vector3f::new(0.235294, 0.67451, 0.843137),
             max_depth: 5,
             objects: vec![],

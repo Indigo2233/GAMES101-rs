@@ -1,8 +1,6 @@
 use std::rc::Rc;
-use std::thread::sleep;
 use std::time::Instant;
-use crate::libs::global::get_random_float;
-use crate::libs::vector::norm;
+use super::global::get_random_float;
 use super::bounds3::{Axis, Bounds3};
 use super::intersection::Intersection;
 use super::object::Object;

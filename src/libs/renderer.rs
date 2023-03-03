@@ -14,7 +14,7 @@ impl Renderer {
         let mut framebuffer = vec!(Vector3f::zeros(); (scene.width * scene.height) as usize);
         let scale = (scene.fov * 0.5).to_radians().tan() as f32;
         let image_aspect_ratio = scene.width as f32 / scene.height as f32;
-        let eye_pos = Vector3f::new(-1.0, 5.0, 10.0);
+        let eye_pos = Vector3f::new(278.0, 273.0, -800.0);
         let spp = 8;
         let inv_spp = 1.0 / spp as f32;
         println!("SPP: {spp}");
@@ -24,14 +24,14 @@ impl Renderer {
                 let x = (2.0 * (i as f32 + 0.5) / scene.width as f32 - 1.0) * scale * image_aspect_ratio;
                 let y = (1.0 - 2.0 * (j as f32 + 0.5) / scene.height as f32) * scale;
 
-                let dir = normalize(&Vector3f::new(x, y, -1.0));
+                let dir = normalize(&Vector3f::new(-x, y, 1.0));
                 let ray = Ray::new(eye_pos.clone(), dir, 0.0);
-                let _ = (0..spp).into_iter().map(|_| { framebuffer[m] = scene.cast_ray(&ray, 0) * inv_spp; });
+                for _ in 0..spp { framebuffer[m] += scene.cast_ray(&ray, 0) * inv_spp; }
                 m += 1;
             }
-            update_progress(j as f64 / scene.height as f64);
+            // update_progress(j as f64 / scene.height as f64);
         }
-        update_progress(1.0);
+        // update_progress(1.0);
         let mut file = BufWriter::new(File::create("binary.ppm")?);
         file.write_all(format!("P6\n{} {}\n255\n", scene.width, scene.height).as_bytes())?;
         let mut color = [0, 0, 0];

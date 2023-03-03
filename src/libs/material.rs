@@ -36,7 +36,7 @@ impl Material {
     pub fn get_emission(&self) -> &Vector3f {
         &self.m_emission
     }
-    pub fn sample(&self, wi: &Vector3f, normal: &Vector3f) -> Vector3f {
+    pub fn sample(&self, _wi: &Vector3f, normal: &Vector3f) -> Vector3f {
         match self.material_type {
             MaterialType::Diffuse => {
                 let x1 = get_random_float();
@@ -49,7 +49,7 @@ impl Material {
             }
         }
     }
-    pub fn eval(&self, wi: &Vector3f, wo: &Vector3f, normal: &Vector3f) -> Vector3f {
+    pub fn eval(&self, _wi: &Vector3f, wo: &Vector3f, normal: &Vector3f) -> Vector3f {
         match self.material_type {
             MaterialType::Diffuse => {
                 let cos_alpha = dot(&normal, &wo);
@@ -60,7 +60,7 @@ impl Material {
             }
         }
     }
-    pub fn pdf(&self, wi: &Vector3f, wo: &Vector3f, normal: &Vector3f) -> f32 {
+    pub fn pdf(&self, _wi: &Vector3f, wo: &Vector3f, normal: &Vector3f) -> f32 {
         match self.material_type {
             MaterialType::Diffuse => {
                 if dot(&wo, &normal) > 0.0 {

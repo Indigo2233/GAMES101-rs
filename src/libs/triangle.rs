@@ -1,3 +1,4 @@
+use std::process::exit;
 use std::rc::Rc;
 use crate::libs::global::get_random_float;
 use crate::libs::vector::norm;
@@ -103,6 +104,7 @@ pub struct MeshTriangle {
 impl MeshTriangle {
     pub fn from_obj(filename: &str, m: Rc<Material>) -> Self {
         let (bounding_box, triangles, area) = unsafe { load_triangles(filename, m.clone()) };
+        println!("Area: {area}");
         let ptrs: Vec<Rc<dyn Object>> = triangles.into_iter().map(|t| Rc::new(t) as Rc<dyn Object>).collect();
         let bvh = BVHAccel::default(ptrs);
         Self {
