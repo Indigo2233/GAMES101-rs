@@ -1,4 +1,4 @@
-use std::rc::Rc;
+use std::sync::Arc;
 use crate::libs::global::get_random_float;
 use crate::libs::vector::norm;
 use super::bvh::{BVHAccel, SplitMethod};
@@ -14,8 +14,8 @@ pub struct Scene {
     pub fov: f64,
     pub background_color: Vector3f,
     pub max_depth: i32,
-    objects: Vec<Rc<MeshTriangle>>,
-    bvh: Option<Rc<BVHAccel>>,
+    objects: Vec<Arc<MeshTriangle>>,
+    bvh: Option<Arc<BVHAccel>>,
     russian_roulette: f32,
 }
 
@@ -32,14 +32,14 @@ impl Scene {
             russian_roulette: 0.8,
         }
     }
-    pub fn add_obj(&mut self, object: Rc<MeshTriangle>) {
+    pub fn add_obj(&mut self, object: Arc<MeshTriangle>) {
         self.objects.push(object);
     }
 
     pub fn build_bvh(&mut self) {
         println!(" - Generating BVH...\n");
-        let objs = self.objects.iter().map(|m| -> Rc<dyn Object> { m.clone() }).collect();
-        self.bvh = Some(Rc::new(BVHAccel::new(objs, 1, SplitMethod::Naive)));
+        let objs = self.objects.iter().map(|m| -> Arc<dyn Object + Send + Sync> { m.clone() }).collect();
+        self.bvh = Some(Arc::new(BVHAccel::new(objs, 1, SplitMethod::Naive)));
     }
 
     pub fn intersect(&self, ray: &Ray) -> Intersection {

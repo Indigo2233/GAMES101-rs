@@ -1,4 +1,4 @@
-use std::rc::Rc;
+use std::sync::Arc;
 use crate::libs::global::get_random_float;
 use crate::libs::vector::norm;
 use super::bounds3::Bounds3;
@@ -20,11 +20,11 @@ pub struct Triangle {
     pub e2: Vector3f,
     pub normal: Vector3f,
     pub area: f32,
-    m: Option<Rc<Material>>,
+    m: Option<Arc<Material>>,
 }
 
 impl Triangle {
-    pub fn new(v0: Vector3f, v1: Vector3f, v2: Vector3f, m: Option<Rc<Material>>) -> Self {
+    pub fn new(v0: Vector3f, v1: Vector3f, v2: Vector3f, m: Option<Arc<Material>>) -> Self {
         let e1 = &v1 - &v0;
         let e2 = &v2 - &v0;
         let area = norm(&cross(&e1, &e2)) * 0.5;
@@ -53,7 +53,7 @@ impl Object for Triangle {
         t_tmp = dot(&self.e2, &qvec) as f64 * det_inv;
         if t_tmp < 0.0 { return inter; }
         inter.happened = true;
-        inter.obj = Some(Rc::new(self.clone()));
+        inter.obj = Some(Arc::new(self.clone()));
         inter.normal = self.normal.clone();
         inter.coords = ray.at(t_tmp);
         inter.m = self.m.clone();
@@ -96,20 +96,20 @@ impl Object for Triangle {
 
 pub struct MeshTriangle {
     pub bounding_box: Bounds3,
-    pub bvh: Option<Rc<BVHAccel>>,
-    pub m: Option<Rc<Material>>,
+    pub bvh: Option<Arc<BVHAccel>>,
+    pub m: Option<Arc<Material>>,
     pub area: f32,
 }
 
 impl MeshTriangle {
-    pub fn from_obj(filename: &str, m: Rc<Material>) -> Self {
+    pub fn from_obj(filename: &str, m: Arc<Material>) -> Self {
         let (bounding_box, triangles, area) = unsafe { load_triangles(filename, m.clone()) };
         println!("Area: {area}");
-        let ptrs: Vec<Rc<dyn Object>> = triangles.into_iter().map(|t| Rc::new(t) as Rc<dyn Object>).collect();
+        let ptrs: Vec<Arc<dyn Object + Send + Sync>> = triangles.into_iter().map(|t| Arc::new(t) as Arc<dyn Object + Send + Sync>).collect();
         let bvh = BVHAccel::default(ptrs);
         Self {
             bounding_box,
-            bvh: Some(Rc::new(bvh)),
+            bvh: Some(Arc::new(bvh)),
             m: Some(m),
             area,
         }

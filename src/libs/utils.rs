@@ -1,7 +1,7 @@
 use std::ffi::CString;
 use std::os::raw::{c_char, c_void};
-use std::rc::Rc;
 use std::slice;
+use std::sync::Arc;
 use crate::libs::material::Material;
 use super::bounds3::Bounds3;
 use super::triangle::Triangle;
@@ -19,7 +19,7 @@ extern "C" {
     fn mesh_position_at(mesh: *const c_void, idx: usize) -> *const f32;
 }
 
-pub unsafe fn load_triangles(filename: &str, m: Rc<Material>) -> (Bounds3, Vec<Triangle>, f32) {
+pub unsafe fn load_triangles(filename: &str, m: Arc<Material>) -> (Bounds3, Vec<Triangle>, f32) {
     let loader = create_new_loader();
     let mut triangles = vec![];
 

@@ -1,7 +1,7 @@
 use std::fmt::{Display, Formatter};
 use std::ops::{Div, Mul, Sub, Add, Neg, AddAssign};
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Copy)]
 pub struct Vector3f {
     pub x: f32,
     pub y: f32,

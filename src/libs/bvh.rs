@@ -1,4 +1,4 @@
-use std::rc::Rc;
+use std::sync::Arc;
 use std::time::Instant;
 use super::global::get_random_float;
 use super::bounds3::{Axis, Bounds3};
@@ -8,9 +8,9 @@ use super::ray::Ray;
 
 pub struct BVHBuildNode {
     bounds: Bounds3,
-    left: Option<Rc<BVHBuildNode>>,
-    right: Option<Rc<BVHBuildNode>>,
-    object: Option<Rc<dyn Object>>,
+    left: Option<Arc<BVHBuildNode>>,
+    right: Option<Arc<BVHBuildNode>>,
+    object: Option<Arc<dyn Object + Send + Sync>>,
     area: f32,
 }
 
@@ -33,14 +33,14 @@ pub enum SplitMethod {
 }
 
 pub struct BVHAccel {
-    pub root: Option<Rc<BVHBuildNode>>,
+    pub root: Option<Arc<BVHBuildNode>>,
     pub max_prims_in_node: i32,
     pub split_method: SplitMethod,
-    pub primitives: Vec<Rc<dyn Object>>,
+    pub primitives: Vec<Arc<dyn Object + Send + Sync>>,
 }
 
 impl BVHAccel {
-    pub fn new(p: Vec<Rc<dyn Object>>, max_prims_in_node: i32, split_method: SplitMethod) -> Self {
+    pub fn new(p: Vec<Arc<dyn Object + Send + Sync>>, max_prims_in_node: i32, split_method: SplitMethod) -> Self {
         let start = Instant::now();
         let max_prims_in_node = 255.max(max_prims_in_node);
 
@@ -56,10 +56,10 @@ impl BVHAccel {
         println!("\rBVH Generation complete: \nTime Taken: {:.2} secs\n\n", start.elapsed().as_secs_f32());
         res
     }
-    pub fn default(p: Vec<Rc<dyn Object>>) -> Self {
+    pub fn default(p: Vec<Arc<dyn Object + Send + Sync>>) -> Self {
         Self::new(p, 1, SplitMethod::Naive)
     }
-    pub fn get_sample(node: Rc<BVHBuildNode>, p: f32) -> (Intersection, f32) {
+    pub fn get_sample(node: Arc<BVHBuildNode>, p: f32) -> (Intersection, f32) {
         if node.left.is_none() || node.right.is_none() {
             let (pos, pdf) = node.object.as_ref().unwrap().sample();
             return (pos, pdf * node.area);
@@ -79,7 +79,7 @@ impl BVHAccel {
         let root = self.root.clone().unwrap();
         BVHAccel::get_intersection(root, ray)
     }
-    pub fn get_intersection(nodes: Rc<BVHBuildNode>, ray: &Ray) -> Intersection {
+    pub fn get_intersection(nodes: Arc<BVHBuildNode>, ray: &Ray) -> Intersection {
         let res = Intersection::new();
         if !nodes.bounds.intersect_p(ray, &ray.direction_inv,
                                      [ray.direction.x < 0.0, ray.direction.y < 0.0, ray.direction.z < 0.]) {
@@ -96,7 +96,7 @@ impl BVHAccel {
         if hit1.distance < hit2.distance { hit1 } else { hit2 }
     }
 
-    pub fn recursive_build(objs: &mut Vec<Rc<dyn Object>>) -> Option<Rc<BVHBuildNode>> {
+    pub fn recursive_build(objs: &mut Vec<Arc<dyn Object + Send + Sync>>) -> Option<Arc<BVHBuildNode>> {
         let mut node = BVHBuildNode::default();
         let mut bounds = Bounds3::default();
         for i in 0..objs.len() {
@@ -121,7 +121,7 @@ impl BVHAccel {
         } else {
             let centroid_bounds = objs.iter().fold(
                 Bounds3::default(),
-                |b, obj: &Rc<dyn Object>| { Bounds3::union_point(&b, &obj.get_bounds().centroid()) });
+                |b, obj: &Arc<dyn Object + Send + Sync>| { Bounds3::union_point(&b, &obj.get_bounds().centroid()) });
             let dim = centroid_bounds.max_extent();
             let half = objs.len() / 2;
             let (l, m, r) = match dim {
@@ -143,6 +143,6 @@ impl BVHAccel {
                                                 &node.right.as_ref().unwrap().bounds);
             node.area = node.left.as_ref().unwrap().area + node.right.as_ref().unwrap().area;
         }
-        Some(Rc::new(node))
+        Some(Arc::new(node))
     }
 }

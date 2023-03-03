@@ -1,4 +1,4 @@
-use std::rc::Rc;
+use std::sync::Arc;
 use super::material::Material;
 use super::object::Object;
 use super::vector::Vector3f;
@@ -8,8 +8,8 @@ pub struct Intersection {
     pub coords: Vector3f,
     pub normal: Vector3f,
     pub distance: f64,
-    pub obj: Option<Rc<dyn Object>>,
-    pub m: Option<Rc<Material>>,
+    pub obj: Option<Arc<dyn Object>>,
+    pub m: Option<Arc<Material>>,
     pub emit: Vector3f,
 }
 
