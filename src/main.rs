@@ -1,4 +1,3 @@
-use std::process::exit;
 use std::rc::Rc;
 use std::time::Instant;
 use libs::renderer::Renderer;
@@ -6,7 +5,7 @@ use libs::scene::Scene;
 use libs::triangle::MeshTriangle;
 use libs::vector::Vector3f;
 use libs::material::Material;
-use crate::libs::global::MaterialType;
+use libs::global::MaterialType;
 
 mod libs;
 

@@ -1,5 +1,6 @@
 use std::fs::File;
 use std::io::{BufWriter, Error, Write};
+// use std::thread::spawn;
 use super::global::{clamp, update_progress};
 use super::ray::Ray;
 use super::scene::Scene;
@@ -15,7 +16,7 @@ impl Renderer {
         let scale = (scene.fov * 0.5).to_radians().tan() as f32;
         let image_aspect_ratio = scene.width as f32 / scene.height as f32;
         let eye_pos = Vector3f::new(278.0, 273.0, -800.0);
-        let spp = 1;
+        let spp = 64;
         let inv_spp = 1.0 / spp as f32;
         println!("SPP: {spp}");
         let mut m = 0;
@@ -26,12 +27,15 @@ impl Renderer {
 
                 let dir = normalize(&Vector3f::new(-x, y, 1.0));
                 let ray = Ray::new(eye_pos.clone(), dir, 0.0);
-                for _ in 0..spp { framebuffer[m] += scene.cast_ray(&ray, 0) * inv_spp; }
+                // let t = spawn(|| {
+                    for _ in 0..spp { framebuffer[m] += scene.cast_ray(&ray, 0) * inv_spp; }
+                // });
+                // t.join().unwrap();
                 m += 1;
             }
-            // update_progress(j as f64 / scene.height as f64);
+            update_progress(j as f64 / scene.height as f64);
         }
-        // update_progress(1.0);
+        update_progress(1.0);
         let mut file = BufWriter::new(File::create("binary.ppm")?);
         file.write_all(format!("P6\n{} {}\n255\n", scene.width, scene.height).as_bytes())?;
         let mut color = [0, 0, 0];

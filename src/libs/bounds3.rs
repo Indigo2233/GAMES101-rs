@@ -1,5 +1,4 @@
 use std::mem::swap;
-use std::process::exit;
 use super::ray::Ray;
 use super::vector::Vector3f;
 

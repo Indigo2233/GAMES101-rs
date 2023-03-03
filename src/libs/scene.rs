@@ -4,7 +4,7 @@ use crate::libs::vector::norm;
 use super::bvh::{BVHAccel, SplitMethod};
 use super::object::Object;
 use super::ray::Ray;
-use super::vector::{dot, normalize,  Vector3f};
+use super::vector::{dot, normalize, Vector3f};
 use super::intersection::Intersection;
 use super::triangle::MeshTriangle;
 
@@ -80,11 +80,12 @@ impl Scene {
         let (mut l_dir, mut l_indir) = (Vector3f::zeros(), Vector3f::zeros());
         let d = norm(&(p - light_point.coords));
         let light_inter = self.intersect(&light_ray);
-        if light_inter.distance - d as f64 > 0.001 {
-            l_dir = light_point.emit * m.eval(&wo, &light_ray.direction, &normal) *
-                dot(&light_ray.direction, &normal) *
-                dot(&light_ray.direction, &normalize(&(-light_point.normal))) /
-                d.powi(2) / pdf_l;
+        if light_inter.distance - d as f64 > -0.001 {
+            let ev = m.eval(&wo, &light_ray.direction, &normal);
+            let dot1 = dot(&light_ray.direction, &normal);
+            let dot2 = dot(&light_ray.direction, &normalize(&(-light_point.normal)));
+            l_dir = light_point.emit * ev *
+                dot1 * dot2 / d.powi(2) / pdf_l;
         }
         if get_random_float() > self.russian_roulette { return l_dir; }
 

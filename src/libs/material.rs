@@ -1,7 +1,7 @@
 use std::f32::consts::PI;
-use crate::libs::global::get_random_float;
-use crate::libs::renderer::EPSILON;
-use crate::libs::vector::{cross, dot, norm};
+use super::global::get_random_float;
+use super::renderer::EPSILON;
+use super::vector::{cross, dot, norm};
 use super::global::MaterialType;
 use super::vector::Vector3f;
 
