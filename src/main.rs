@@ -57,3 +57,8 @@ fn main() {
 // SPP: 32
 // Render complete:
 // Time taken: 86.44 s
+
+// Parallel: (16 threads)
+// SPP: 128
+// Render complete:
+// Time taken: 86.44 s

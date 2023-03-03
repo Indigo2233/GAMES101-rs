@@ -1,6 +1,7 @@
 use std::fs::File;
 use std::io::{BufWriter, Error, Write};
 use std::sync::{Arc, Mutex};
+use std::sync::atomic::{AtomicIsize, Ordering};
 use std::thread::spawn;
 use super::global::{clamp, update_progress};
 use super::ray::Ray;
@@ -16,15 +17,15 @@ impl Renderer {
         let scene = Arc::new(scene);
         let framebuffer = vec!(Vector3f::zeros(); (scene.width * scene.height) as usize);
         let framebuffer = Arc::new(Mutex::new(framebuffer));
+        let progress = Arc::new(AtomicIsize::new(0));
         let scale = (scene.fov * 0.5).to_radians().tan() as f32;
         let image_aspect_ratio = scene.width as f32 / scene.height as f32;
         let eye_pos = Vector3f::new(278.0, 273.0, -800.0);
-        let spp = 32;
+        let spp = 128;
         let inv_spp = 1.0 / spp as f32;
+
         println!("SPP: {spp}");
-
         let (w, h) = (scene.width, scene.height);
-
         let n_threads = 16;
         let mut threads = vec![];
 
@@ -34,6 +35,7 @@ impl Renderer {
             let d = chunk.to_vec();
             let s = scene.clone();
             let buffer = framebuffer.clone();
+            let pro = progress.clone();
             threads.push(spawn(move || {
                 for j in d {
                     for i in 0..w {
@@ -48,7 +50,8 @@ impl Renderer {
                         let m = j * w + i;
                         fb[m as usize] = res.into_iter().fold(Vector3f::zeros(), |cur, r| cur + r);
                     }
-                    update_progress(j as f64 / h as f64);
+                    pro.fetch_add(1, Ordering::SeqCst);
+                    update_progress(pro.load(Ordering::SeqCst) as f64 / h as f64);
                 }
             }));
         }
