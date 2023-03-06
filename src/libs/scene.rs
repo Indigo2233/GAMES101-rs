@@ -1,6 +1,6 @@
 use std::sync::Arc;
-use crate::libs::global::get_random_float;
-use crate::libs::vector::norm;
+use super::global::get_random_float;
+use super::vector::norm;
 use super::bvh::{BVHAccel, SplitMethod};
 use super::object::Object;
 use super::ray::Ray;

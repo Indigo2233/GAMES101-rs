@@ -1,7 +1,7 @@
 use std::sync::Arc;
 use std::time::Instant;
 use super::global::get_random_float;
-use super::bounds3::{Axis, Bounds3};
+use super::bounds3::Bounds3;
 use super::intersection::Intersection;
 use super::object::Object;
 use super::ray::Ray;
@@ -98,13 +98,8 @@ impl BVHAccel {
 
     pub fn recursive_build(objs: &mut Vec<Arc<dyn Object + Send + Sync>>) -> Option<Arc<BVHBuildNode>> {
         let mut node = BVHBuildNode::default();
-        let mut bounds = Bounds3::default();
-        for i in 0..objs.len() {
-            let obj_bound = objs[i].get_bounds();
-            bounds = Bounds3::union_bounds(&bounds, &obj_bound);
-        }
         if objs.len() == 1 {
-            node.bounds = objs[0].get_bounds();
+            node.bounds = objs[0].get_bounds().clone();
             node.object = Some(objs[0].clone());
             node.left = None;
             node.right = None;
@@ -124,14 +119,9 @@ impl BVHAccel {
                 |b, obj: &Arc<dyn Object + Send + Sync>| { Bounds3::union_point(&b, &obj.get_bounds().centroid()) });
             let dim = centroid_bounds.max_extent();
             let half = objs.len() / 2;
-            let (l, m, r) = match dim {
-                Axis::X => objs.select_nth_unstable_by(
-                    half, |o1, o2| { o1.get_bounds().centroid().x.partial_cmp(&o2.get_bounds().centroid().x).unwrap() }),
-                Axis::Y => objs.select_nth_unstable_by(
-                    half, |o1, o2| { o1.get_bounds().centroid().y.partial_cmp(&o2.get_bounds().centroid().y).unwrap() }),
-                Axis::Z => objs.select_nth_unstable_by(
-                    half, |o1, o2| { o1.get_bounds().centroid().z.partial_cmp(&o2.get_bounds().centroid().z).unwrap() }),
-            };
+            let (l, m, r) =
+                objs.select_nth_unstable_by(half, |o1, o2|
+                    { o1.get_bounds().centroid_axis(dim).partial_cmp(&o2.get_bounds().centroid_axis(dim)).unwrap() });
             let mut left_shapes = l.to_vec();
             left_shapes.push(m.clone());
             let mut right_shapes = r.to_vec();

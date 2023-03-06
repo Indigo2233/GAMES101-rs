@@ -1,6 +1,6 @@
 use std::sync::Arc;
-use crate::libs::global::get_random_float;
-use crate::libs::vector::norm;
+use super::global::get_random_float;
+use super::vector::norm;
 use super::bounds3::Bounds3;
 use super::bvh::BVHAccel;
 use super::intersection::Intersection;
@@ -21,6 +21,7 @@ pub struct Triangle {
     pub normal: Vector3f,
     pub area: f32,
     m: Option<Arc<Material>>,
+    bounds: Bounds3,
 }
 
 impl Triangle {
@@ -29,7 +30,8 @@ impl Triangle {
         let e2 = &v2 - &v0;
         let area = norm(&cross(&e1, &e2)) * 0.5;
         let normal = normalize(&cross(&e1, &e2));
-        Self { v0, v1, v2, e1, e2, normal, area, m }
+        let bounds = Bounds3::union_point(&Bounds3::new(v0.clone(), v1.clone()), &v2);
+        Self { v0, v1, v2, e1, e2, normal, area, m, bounds }
     }
 }
 
@@ -69,8 +71,8 @@ impl Object for Triangle {
         Vector3f::same(0.5)
     }
 
-    fn get_bounds(&self) -> Bounds3 {
-        Bounds3::union_point(&Bounds3::new(self.v0.clone(), self.v1.clone()), &self.v2)
+    fn get_bounds(&self) -> &Bounds3 {
+        &self.bounds
     }
 
     fn get_area(&self) -> f32 {
@@ -136,8 +138,8 @@ impl Object for MeshTriangle {
         lerp(&Vector3f::new(0.815, 0.235, 0.031), &Vector3f::new(0.937, 0.937, 0.231), pattern)
     }
 
-    fn get_bounds(&self) -> Bounds3 {
-        self.bounding_box.clone()
+    fn get_bounds(&self) -> &Bounds3 {
+        &self.bounding_box
     }
 
     fn get_area(&self) -> f32 {

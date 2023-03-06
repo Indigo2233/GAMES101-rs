@@ -2,7 +2,7 @@ use std::ffi::CString;
 use std::os::raw::{c_char, c_void};
 use std::slice;
 use std::sync::Arc;
-use crate::libs::material::Material;
+use super::material::Material;
 use super::bounds3::Bounds3;
 use super::triangle::Triangle;
 use super::vector::Vector3f;

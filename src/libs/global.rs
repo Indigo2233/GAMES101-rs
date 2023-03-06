@@ -5,7 +5,6 @@ pub fn clamp(lo: f32, hi: f32, v: f32) -> f32 {
     lo.max(hi.min(v))
 }
 
-#[allow(dead_code)]
 #[derive(Debug)]
 pub enum MaterialType {
     Diffuse,

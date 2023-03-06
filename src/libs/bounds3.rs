@@ -8,6 +8,7 @@ pub struct Bounds3 {
     pub p_max: Vector3f,
 }
 
+#[derive(Clone, Copy)]
 pub enum Axis { X, Y, Z }
 
 impl Bounds3 {
@@ -80,6 +81,13 @@ impl Bounds3 {
         Bounds3 {
             p_min: Vector3f::min(&b.p_min, p),
             p_max: Vector3f::max(&b.p_max, p),
+        }
+    }
+    pub fn centroid_axis(&self, a: Axis) -> f32 {
+        match a {
+            Axis::X => {self.centroid().x}
+            Axis::Y => {self.centroid().y}
+            Axis::Z => {self.centroid().z}
         }
     }
 }
