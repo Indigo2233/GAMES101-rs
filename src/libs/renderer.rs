@@ -37,14 +37,15 @@ impl Renderer {
             let buffer = framebuffer.clone();
             let pro = progress.clone();
             threads.push(spawn(move || {
+                let mut res = vec!(Vector3f::zeros(); spp);
+                let mut ray = Ray::new(eye_pos.clone(), Vector3f::same(1.0), 0.0);
                 for j in d {
-                    let mut res = vec!(Vector3f::zeros(); spp);
                     for i in 0..w {
                         let x = (2.0 * (i as f32 + 0.5) / w as f32 - 1.0) * scale * image_aspect_ratio;
                         let y = (1.0 - 2.0 * (j as f32 + 0.5) / h as f32) * scale;
-
                         let dir = normalize(&Vector3f::new(-x, y, 1.0));
-                        let ray = Ray::new(eye_pos.clone(), dir, 0.0);
+                        ray.change_dir(dir);
+
                         for k in 0..spp { res[k] = s.cast_ray(&ray, 0) * inv_spp; }
                         let mut fb = buffer.lock().unwrap();
                         let m = j * w + i;
@@ -62,10 +63,10 @@ impl Renderer {
         file.write_all(format!("P6\n{} {}\n255\n", w, h).as_bytes())?;
         let mut color = [0, 0, 0];
         let fb = framebuffer.lock().unwrap();
-        for i in 0..h * w {
-            color[0] = (255.0 * clamp(0.0, 1.0, fb[i as usize].x).powf(0.6)) as u8;
-            color[1] = (255.0 * clamp(0.0, 1.0, fb[i as usize].y).powf(0.6)) as u8;
-            color[2] = (255.0 * clamp(0.0, 1.0, fb[i as usize].z).powf(0.6)) as u8;
+        for i in 0..(h * w) as usize{
+            color[0] = (255.0 * clamp(0.0, 1.0, fb[i].x).powf(0.6)) as u8;
+            color[1] = (255.0 * clamp(0.0, 1.0, fb[i].y).powf(0.6)) as u8;
+            color[2] = (255.0 * clamp(0.0, 1.0, fb[i].z).powf(0.6)) as u8;
             file.write(&color).unwrap();
         }
         Ok(())

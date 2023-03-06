@@ -22,4 +22,11 @@ impl Ray {
     pub fn at(&self, t: f64) -> Vector3f {
         &self.origin + t as f32 * &self.direction
     }
+
+    pub fn change_dir(&mut self, dir: Vector3f) {
+        self.direction_inv.x = 1.0 / dir.x;
+        self.direction_inv.y = 1.0 / dir.y;
+        self.direction_inv.z = 1.0 / dir.z;
+        self.direction = dir;
+    }
 }
