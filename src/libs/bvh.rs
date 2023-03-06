@@ -27,6 +27,7 @@ impl Default for BVHBuildNode {
 }
 
 #[allow(dead_code)]
+#[derive(Clone, Copy, PartialEq)]
 pub enum SplitMethod {
     Naive,
     SAH,
@@ -52,7 +53,7 @@ impl BVHAccel {
         };
         if res.primitives.is_empty() { return res; }
 
-        res.root = Self::recursive_build(&mut res.primitives);
+        res.root = Self::recursive_build(&mut res.primitives, split_method);
         println!("\rBVH Generation complete: \nTime Taken: {:.2} secs\n\n", start.elapsed().as_secs_f32());
         res
     }
@@ -96,7 +97,7 @@ impl BVHAccel {
         if hit1.distance < hit2.distance { hit1 } else { hit2 }
     }
 
-    pub fn recursive_build(objs: &mut Vec<Arc<dyn Object + Send + Sync>>) -> Option<Arc<BVHBuildNode>> {
+    pub fn recursive_build(objs: &mut Vec<Arc<dyn Object + Send + Sync>>, split_method: SplitMethod) -> Option<Arc<BVHBuildNode>> {
         let mut node = BVHBuildNode::default();
         if objs.len() == 1 {
             node.bounds = objs[0].get_bounds().clone();
@@ -105,8 +106,8 @@ impl BVHAccel {
             node.right = None;
             node.area = objs[0].get_area();
         } else if objs.len() == 2 {
-            node.left = BVHAccel::recursive_build(&mut vec![objs[0].clone()]);
-            node.right = BVHAccel::recursive_build(&mut vec![objs[1].clone()]);
+            node.left = BVHAccel::recursive_build(&mut vec![objs[0].clone()], split_method);
+            node.right = BVHAccel::recursive_build(&mut vec![objs[1].clone()], split_method);
 
             node.bounds = Bounds3::union_bounds(
                 &node.left.as_ref().unwrap().bounds,
@@ -122,11 +123,12 @@ impl BVHAccel {
             let (l, m, r) =
                 objs.select_nth_unstable_by(half, |o1, o2|
                     { o1.get_bounds().centroid_axis(dim).partial_cmp(&o2.get_bounds().centroid_axis(dim)).unwrap() });
+            if split_method == SplitMethod::SAH {} // SHA is not implemented.
             let mut left_shapes = l.to_vec();
             left_shapes.push(m.clone());
             let mut right_shapes = r.to_vec();
-            let l = BVHAccel::recursive_build(&mut left_shapes);
-            let r = BVHAccel::recursive_build(&mut right_shapes);
+            let l = BVHAccel::recursive_build(&mut left_shapes, split_method);
+            let r = BVHAccel::recursive_build(&mut right_shapes, split_method);
             node.left = l;
             node.right = r;
             node.bounds = Bounds3::union_bounds(&node.left.as_ref().unwrap().bounds,
