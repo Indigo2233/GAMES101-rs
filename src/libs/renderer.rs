@@ -46,7 +46,7 @@ impl Renderer {
                         let dir = normalize(&Vector3f::new(-x, y, 1.0));
                         ray.change_dir(dir);
 
-                        for k in 0..spp { res[k] = s.cast_ray(&ray, 0) * inv_spp; }
+                        for k in 0..spp { res[k] = s.cast_ray(&ray) * inv_spp; }
                         let mut fb = buffer.lock().unwrap();
                         let m = j * w + i;
                         fb[m as usize] = res.iter().fold(Vector3f::zeros(), |cur, r| cur + r);

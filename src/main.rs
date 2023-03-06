@@ -48,17 +48,7 @@ fn main() {
     println!("Time taken: {:.2} s", start.elapsed().as_secs_f32());
 }
 
-// Sequential:
-// SPP: 32
-// Render complete:
-// Time taken: 489.05 s
-
-// Parallel: (16 threads)
-// SPP: 32
-// Render complete:
-// Time taken: 86.44 s
-
-// Parallel: (16 threads)
+// (Release mode)
 // SPP: 128
 // Render complete:
-// Time taken: 360.32 s
+// Time taken: 100.21 s

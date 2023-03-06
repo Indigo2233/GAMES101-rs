@@ -13,7 +13,6 @@ pub struct Scene {
     pub height: i32,
     pub fov: f64,
     pub background_color: Vector3f,
-    pub max_depth: i32,
     objects: Vec<Arc<MeshTriangle>>,
     bvh: Option<Arc<BVHAccel>>,
     russian_roulette: f32,
@@ -26,7 +25,6 @@ impl Scene {
             height,
             fov: 40.0,
             background_color: Vector3f::new(0.235294, 0.67451, 0.843137),
-            max_depth: 5,
             objects: vec![],
             bvh: None,
             russian_roulette: 0.8,
@@ -64,12 +62,13 @@ impl Scene {
         (Intersection::new(), 0.0)
     }
 
-    pub fn cast_ray(&self, ray: &Ray, depth: i32) -> Vector3f {
+    pub fn cast_ray(&self, ray: &Ray) -> Vector3f {
         let obj_inter = self.intersect(ray);
         if !obj_inter.happened { return Vector3f::zeros(); }
 
         let m = obj_inter.m.as_ref().unwrap();
         if m.has_emission() { return m.get_emission().clone(); }
+
         let p = &obj_inter.coords;
         let normal = normalize(&obj_inter.normal);
         let wo = &ray.direction;
@@ -77,6 +76,7 @@ impl Scene {
         let x = &light_point.coords;
         let ws = normalize(&(x - p));
         let light_ray = Ray::new(p.clone(), ws, 0.0);
+
         let (mut l_dir, mut l_indir) = (Vector3f::zeros(), Vector3f::zeros());
         let d = norm(&(p - light_point.coords));
         let light_inter = self.intersect(&light_ray);
@@ -84,16 +84,16 @@ impl Scene {
             let ev = m.eval(&wo, &light_ray.direction, &normal);
             let dot1 = dot(&light_ray.direction, &normal);
             let dot2 = dot(&light_ray.direction, &normalize(&(-light_point.normal)));
-            l_dir = light_point.emit * ev *
-                dot1 * dot2 / d.powi(2) / pdf_l;
+            l_dir = light_point.emit * ev * dot1 * dot2 / d.powi(2) / pdf_l;
         }
+
         if get_random_float() > self.russian_roulette { return l_dir; }
 
         let wi = normalize(&m.sample(&wo, &normal));
         let t_ray = Ray::new(p.clone(), wi.clone(), 0.0);
         let new_inter = self.intersect(&t_ray);
         if new_inter.happened && !new_inter.m.as_ref().unwrap().has_emission() {
-            let shade = self.cast_ray(&t_ray, depth + 1);
+            let shade = self.cast_ray(&t_ray);
             l_indir = shade * m.eval(&wo, &wi, &normal) * dot(&wi, &normal) /
                 m.pdf(&wo, &wi, &normal) / self.russian_roulette;
         }
