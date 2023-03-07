@@ -1,5 +1,6 @@
 use std::cell::RefCell;
 use std::rc::Rc;
+use core::default::Default;
 use crate::application::{AppConfig, Application};
 use crate::rope::Mass;
 use crate::vector::Vector2d;
@@ -19,9 +20,15 @@ fn main() {
     use glium::glutin::event_loop::ControlFlow;
 
     let event_loop = glutin::event_loop::EventLoop::new();
-    let wb = glutin::window::WindowBuilder::new();
+    let wb = glutin::window::WindowBuilder::new().
+        with_title("Rope Simulation");
+
     let cb = glutin::ContextBuilder::new();
     let display = glium::Display::new(wb, cb, &event_loop).unwrap();
+    let point_params = glium::DrawParameters {
+        point_size: Some(5.0),
+        ..Default::default()
+    };
 
     #[derive(Copy, Clone, Debug)]
     struct Vertex {
@@ -34,7 +41,6 @@ fn main() {
         in vec2 position;
         void main() {
             gl_Position = vec4(position, 0.0, 1.0);
-            gl_PointSize = 5;
         }
     "#;
 
@@ -56,17 +62,23 @@ fn main() {
 
     let micros = 1000 * 1000 / app.config.steps_per_frame;
     let line_indices = glium::index::NoIndices(glium::index::PrimitiveType::LineStrip);
-    let program1 = glium::Program::from_source(&display, vertex_shader_src,
-                                              fragment_shader_src_euler, None).unwrap();
-    let program2 = glium::Program::from_source(&display, vertex_shader_src,
-                                              fragment_shader_src_verlet, None).unwrap();
+    let indices: Vec<u32> = (0..app.rope_verlet.as_ref().unwrap().masses.len() as u32).collect();
+    let indices_buffer =
+        glium::IndexBuffer::new(&display, glium::index::PrimitiveType::Points, &indices)
+            .expect("Failed to create indices buffer");
 
+    let program1 = glium::Program::from_source(&display, vertex_shader_src,
+                                               fragment_shader_src_euler, None).unwrap();
+    let program2 = glium::Program::from_source(&display, vertex_shader_src,
+                                               fragment_shader_src_verlet, None).unwrap();
+
+    let mut last_time = std::time::Instant::now();
     event_loop.run(move |ev, _, control_flow: &mut ControlFlow| {
-        let next_frame_time = std::time::Instant::now() +
+        let next_frame_time = last_time +
             std::time::Duration::from_micros(micros as u64);
         *control_flow = ControlFlow::WaitUntil(next_frame_time);
 
-        match ev {
+        match &ev {
             glutin::event::Event::WindowEvent { event, .. } => match event {
                 glutin::event::WindowEvent::CloseRequested => {
                     *control_flow = ControlFlow::Exit;
@@ -96,12 +108,17 @@ fn main() {
         let vertex_buffer = glium::VertexBuffer::new(&display, &spring1).unwrap();
         target.draw(&vertex_buffer, &line_indices, &program1, &glium::uniforms::EmptyUniforms,
                     &Default::default()).unwrap();
+        target.draw(&vertex_buffer, &indices_buffer, &program1, &glium::uniforms::EmptyUniforms,
+                    &point_params).unwrap();
 
         let vertex_buffer = glium::VertexBuffer::new(&display, &spring2).unwrap();
         target.draw(&vertex_buffer, &line_indices, &program2, &glium::uniforms::EmptyUniforms,
                     &Default::default()).unwrap();
+        target.draw(&vertex_buffer, &indices_buffer, &program2, &glium::uniforms::EmptyUniforms,
+                    &point_params).unwrap();
 
 
         target.finish().unwrap();
+        last_time = std::time::Instant::now();
     });
 }
