@@ -72,7 +72,7 @@ pub(crate) fn frame_buffer2cv_mat(frame_buffer: &Vec<V3f>) -> Mat {
     image
 }
 
-pub fn load_triangles2(obj_file: &str) -> Vec<Triangle> {
+pub fn load_triangles(obj_file: &str) -> Vec<Triangle> {
     let (models, _) = tobj::load_obj(&obj_file, &tobj::LoadOptions::default()).unwrap();
     let mesh = &models[0].mesh;
     let n = mesh.indices.len() / 3;
