@@ -21,3 +21,16 @@ fn main() {
     println!("Render complete: ");
     println!("Time taken: {:.2} s", start.elapsed().as_secs_f32());
 }
+
+// BVH Generation complete:
+// Time Taken: 0.00 secs
+//
+//
+//  - Generating BVH...
+//
+// BVH Generation complete:
+// Time Taken: 0.00 secs
+//
+//
+// Render complete:
+// Time taken: 0.51 s
