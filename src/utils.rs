@@ -1,6 +1,4 @@
-use std::ffi::CString;
-use std::os::raw::{c_char, c_void};
-use std::slice;
+use std::os::raw::c_void;
 use nalgebra::{Matrix3, Matrix4, Vector3, Vector4};
 use opencv::core::{Mat, MatTraitConst};
 use opencv::imgproc::{COLOR_RGB2BGR, cvt_color};
@@ -74,53 +72,25 @@ pub(crate) fn frame_buffer2cv_mat(frame_buffer: &Vec<V3f>) -> Mat {
     image
 }
 
-#[link(name = "objloader")]
-extern "C" {
-    fn create_new_loader() -> *const c_void;
-    fn delete_loader(loader: *const c_void);
-    fn load_file(loader: *const c_void, file: *const c_char) -> i32;
-    fn loaded_meshes(loader: *const c_void, nmesh: *mut i32) -> *const c_void;
-    fn mesh_at(meshes: *const c_void, idx: usize) -> *const c_void;
-    fn vertex_size_mesh(mesh: *const c_void) -> usize;
-    fn mesh_position_at(mesh: *const c_void, idx: usize) -> *const f32;
-    fn mesh_normal_at(mesh: *const c_void, idx: usize) -> *const f32;
-    fn mesh_texture_at(mesh: *const c_void, idx: usize) -> *const f32;
-}
+pub fn load_triangles2(obj_file: &str) -> Vec<Triangle> {
+    let (models, _) = tobj::load_obj(&obj_file, &tobj::LoadOptions::default()).unwrap();
+    let mesh = &models[0].mesh;
+    let n = mesh.indices.len() / 3;
+    let mut triangles = vec![Triangle::default(); n];
 
-pub unsafe fn load_triangles() -> Vec<Triangle> {
-    let mut triangles = vec![];
-    let loader = create_new_loader();
+    for vtx in 0..n {
+        let rg = vtx * 3..vtx * 3 + 3;
+        let idx: Vec<_> = mesh.indices[rg.clone()].iter().map(|i| *i as usize).collect();
 
-    let file: *const c_char = CString::new("./models/spot/spot_triangulated_good.obj").unwrap().into_raw();
-    load_file(loader, file);
-
-    let mut nmesh: i32 = 0;
-    let meshes = loaded_meshes(loader, &mut nmesh as *mut i32);
-    for i in 0..nmesh as usize {
-        let mesh = mesh_at(meshes, i);
-        let sz = vertex_size_mesh(mesh);
-        let mut j = 0;
-        while j < sz {
-            let mut t = Triangle::default();
-            for k in 0..3 {
-                let res: Vec<f64> = slice::from_raw_parts(mesh_position_at(mesh, k + j), 3)
-                    .into_iter().map(|elem| *elem as f64).collect();
-                t.set_vertex(k, Vector4::new(res[0], res[1], res[2], 1.0));
-
-                let res: Vec<f64> = slice::from_raw_parts(mesh_normal_at(mesh, k + j), 3)
-                    .into_iter().map(|elem| *elem as f64).collect();
-                t.set_normal(k, Vector3::new(res[0], res[1], res[2]));
-                let res: Vec<f64> = slice::from_raw_parts(mesh_texture_at(mesh, k + j), 2)
-                    .into_iter().map(|elem| *elem as f64).collect();
-                t.set_tex_coord(k, res[0], res[1]);
-            }
-            j += 3;
-
-            triangles.push(t);
+        for j in 0..3 {
+            let v = &mesh.positions[3 * idx[j]..3 * idx[j] + 3];
+            triangles[vtx].set_vertex(j, Vector4::new(v[0] as f64, v[1] as f64, v[2] as f64, 1.0));
+            let ns = &mesh.normals[3 * idx[j]..3 * idx[j] + 3];
+            triangles[vtx].set_normal(j, Vector3::new(ns[0] as f64, ns[1] as f64, ns[2] as f64));
+            let tex = &mesh.texcoords[2 * idx[j]..2 * idx[j] + 2];
+            triangles[vtx].set_tex_coord(j, tex[0] as f64, tex[1] as f64);
         }
     }
-
-    delete_loader(loader);
     triangles
 }
 

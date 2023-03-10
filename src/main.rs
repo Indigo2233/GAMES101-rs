@@ -18,10 +18,9 @@ use crate::shader::FragmentShaderPayload;
 use crate::texture::Texture;
 
 fn main() -> Result<()> {
-    let triangles = unsafe { load_triangles() };
-
+    let obj_file = "./models/spot/spot_triangulated_good.obj";
+    let triangles = load_triangles2(&obj_file);
     let angle = 140.0;
-
     let mut r = Rasterizer::new(700, 700);
     let obj_path = "./models/spot/".to_owned();
     let mut filename = "output.png".to_owned();
