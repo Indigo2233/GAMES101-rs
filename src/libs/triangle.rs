@@ -78,7 +78,7 @@ pub struct MeshTriangle {
 
 impl MeshTriangle {
     pub fn from_obj(filename: &str) -> Self {
-        let (bounding_box, triangles) = unsafe { load_triangles(filename) };
+        let (bounding_box, triangles) =  load_triangles(filename) ;
         let ptrs: Vec<Rc<dyn Object>> = triangles.into_iter().map(|t| Rc::new(t) as Rc<dyn Object>).collect();
         let bvh = BVHAccel::default(ptrs);
         Self {
