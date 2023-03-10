@@ -1,4 +1,5 @@
 use std::sync::Arc;
+use crate::libs::utils::load_triangles2;
 use super::global::get_random_float;
 use super::vector::norm;
 use super::bounds3::Bounds3;
@@ -8,7 +9,6 @@ use super::material::Material;
 use super::object::{Object};
 use super::ray::Ray;
 use super::renderer::EPSILON;
-use super::utils::load_triangles;
 use super::vector::{cross, dot, lerp, normalize, Vector2f, Vector3f};
 
 #[derive(Default, Debug, Clone)]
@@ -105,7 +105,7 @@ pub struct MeshTriangle {
 
 impl MeshTriangle {
     pub fn from_obj(filename: &str, m: Arc<Material>) -> Self {
-        let (bounding_box, triangles, area) = unsafe { load_triangles(filename, m.clone()) };
+        let (bounding_box, triangles, area) = load_triangles2(filename, m.clone());
         println!("Area: {area}");
         let ptrs: Vec<Arc<dyn Object + Send + Sync>> = triangles.into_iter().map(|t| Arc::new(t) as Arc<dyn Object + Send + Sync>).collect();
         let bvh = BVHAccel::default(ptrs);
