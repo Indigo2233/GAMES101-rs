@@ -5,7 +5,6 @@ use super::triangle::Triangle;
 use super::vector::Vector3f;
 
 pub fn load_triangles2(obj_file: &str, m: Arc<Material>) -> (Bounds3, Vec<Triangle>, f32) {
-
     let (models, _) = tobj::load_obj(&obj_file, &tobj::LoadOptions::default()).unwrap();
     let mesh = &models[0].mesh;
     let n = mesh.indices.len() / 3;
