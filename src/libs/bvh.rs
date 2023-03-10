@@ -30,7 +30,7 @@ impl Default for BVHBuildNode {
 #[derive(Clone, Copy, PartialEq)]
 pub enum SplitMethod {
     Naive,
-    SAH,
+    SAH, // SAH is not implemented
 }
 
 pub struct BVHAccel {
@@ -123,7 +123,7 @@ impl BVHAccel {
             let (l, m, r) =
                 objs.select_nth_unstable_by(half, |o1, o2|
                     { o1.get_bounds().centroid_axis(dim).partial_cmp(&o2.get_bounds().centroid_axis(dim)).unwrap() });
-            if split_method == SplitMethod::SAH {} // SHA is not implemented.
+            if split_method == SplitMethod::SAH {} // SAH is not implemented.
             let mut left_shapes = l.to_vec();
             left_shapes.push(m.clone());
             let mut right_shapes = r.to_vec();
