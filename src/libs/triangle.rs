@@ -1,12 +1,12 @@
 use std::sync::Arc;
-use crate::libs::utils::load_triangles2;
+use crate::libs::utils::load_triangles;
 use super::global::get_random_float;
 use super::vector::norm;
 use super::bounds3::Bounds3;
 use super::bvh::BVHAccel;
 use super::intersection::Intersection;
 use super::material::Material;
-use super::object::{Object};
+use super::object::Object;
 use super::ray::Ray;
 use super::renderer::EPSILON;
 use super::vector::{cross, dot, lerp, normalize, Vector2f, Vector3f};
