@@ -105,7 +105,7 @@ pub struct MeshTriangle {
 
 impl MeshTriangle {
     pub fn from_obj(filename: &str, m: Arc<Material>) -> Self {
-        let (bounding_box, triangles, area) = load_triangles2(filename, m.clone());
+        let (bounding_box, triangles, area) = load_triangles(filename, m.clone());
         println!("Area: {area}");
         let ptrs: Vec<Arc<dyn Object + Send + Sync>> = triangles.into_iter().map(|t| Arc::new(t) as Arc<dyn Object + Send + Sync>).collect();
         let bvh = BVHAccel::default(ptrs);
